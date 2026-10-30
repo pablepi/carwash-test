@@ -550,7 +550,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
       const timeStr = String(b.timeSlot || '12:00').trim();
       const [h, m] = timeStr.split(':').map((v) => parseInt(v, 10) || 0);
       const startFormatted = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-      const endTotalMins = h * 60 + m + 45;
+      let durationMins = 45;
+      const titleLower = String(b.serviceTitle || '').toLowerCase();
+      if (titleLower.includes('30') || titleLower.includes('экспресс') || b.totalPrice === 800) {
+        durationMins = 30;
+      } else if (titleLower.includes('60') || b.totalPrice >= 1500) {
+        durationMins = 60;
+      }
+      const endTotalMins = h * 60 + m + durationMins;
       const endH = Math.floor(endTotalMins / 60) % 24;
       const endM = endTotalMins % 60;
       const endStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;

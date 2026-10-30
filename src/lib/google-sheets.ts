@@ -112,11 +112,8 @@ function normalizeDate(raw: any): string {
     const clean = s.replace(/\s*\(.*\)/, '');
     const d = new Date(clean);
     if (!isNaN(d.getTime())) {
-      // In Google Sheets created with America/New_York (GMT-4/GMT-5) timezone,
-      // midnight in Moscow corresponds to 17:00 of the previous day in New York.
-      // Convert UTC timestamp to Moscow time (+3 hours)
-      const moscowDate = new Date(d.getTime() + 3 * 3600 * 1000);
-      return moscowDate.toISOString().slice(0, 10);
+      // In Google Sheets created with America/New_York timezone, format correctly in Europe/Moscow
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(d);
     }
   } catch {}
   return s;
@@ -129,18 +126,18 @@ function normalizeTime(raw: any): string {
   if (simpleMatch) {
     return simpleMatch[1].padStart(2, '0') + ':' + simpleMatch[2];
   }
-  // Full Date string from Google Sheets (e.g. Sat Dec 30 1899 12:59:43 GMT-0500)
+  // Full Date string from Google Sheets (e.g. Sat Dec 30 1899 13:59:43 GMT-0500)
   if (s.includes('GMT') || s.includes('1899') || s.includes('T')) {
     try {
       const clean = s.replace(/\s*\(.*\)/, '');
       const d = new Date(clean);
       if (!isNaN(d.getTime())) {
-        // d is in UTC, Moscow is UTC+3. Round minutes to nearest 5
-        let totalMins = d.getUTCHours() * 60 + d.getUTCMinutes() + 180;
-        totalMins = Math.round(totalMins / 5) * 5;
-        const h = Math.floor(totalMins / 60) % 24;
-        const m = totalMins % 60;
-        return h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0');
+        // Use Intl.DateTimeFormat with Europe/Moscow timezone so historical 1899 LMT offsets are handled accurately
+        return new Intl.DateTimeFormat('ru-RU', {
+          timeZone: 'Europe/Moscow',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(d);
       }
     } catch {}
   }
@@ -240,7 +237,7 @@ export async function fetchBusySlotsFromGoogleSheets(
     if (!res.ok) return [];
     const data = await res.json();
     if (data.status === 'success' && Array.isArray(data.busySlots)) {
-      return data.busySlots.map((s: any) => (typeof s === 'string' ? s : s?.timeSlot || String(s)));
+      return data.busySlots.map((s: any) => normalizeTime(typeof s === 'string' ? s : s?.timeSlot || String(s)));
     }
     return [];
   } catch (err) {
