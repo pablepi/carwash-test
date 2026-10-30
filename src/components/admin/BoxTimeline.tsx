@@ -66,6 +66,7 @@ export const BoxTimeline: React.FC<BoxTimelineProps> = ({
         {boxes.map((boxName, boxIdx) => {
           const targetNum = String(boxIdx + 1);
           const boxBookings = bookings.filter((b) => {
+            if (b.status === 'done' || b.status === 'cancelled') return false;
             const raw = String(b.box_name || b.box_id || '').trim();
             if (raw === boxName) return true;
             if (raw === targetNum) return true;

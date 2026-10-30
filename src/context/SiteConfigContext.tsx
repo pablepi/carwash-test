@@ -113,27 +113,33 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     applyThemeToDocument(config.theme, config.meta);
   }, [config.theme, config.meta]);
 
-  // Try to load remote shared config from Google Sheets on initial load
+  // Try to load remote shared config from Google Sheets on initial load and periodically
   useEffect(() => {
     const sheetsUrl = (config as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL;
     if (!sheetsUrl) return;
 
-    fetchConfigFromGoogleSheets(sheetsUrl)
-      .then((remoteData) => {
-        if (remoteData) {
-          const validation = SiteConfigSchema.safeParse(remoteData);
-          if (validation.success) {
-            setConfig((prev) => ({
-              ...prev,
-              ...validation.data,
-            }));
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(validation.data));
-            } catch {}
+    const pullRemoteConfig = () => {
+      fetchConfigFromGoogleSheets(sheetsUrl)
+        .then((remoteData) => {
+          if (remoteData) {
+            const validation = SiteConfigSchema.safeParse(remoteData);
+            if (validation.success) {
+              setConfig((prev) => ({
+                ...prev,
+                ...validation.data,
+              }));
+              try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(validation.data));
+              } catch {}
+            }
           }
-        }
-      })
-      .catch(() => {});
+        })
+        .catch(() => {});
+    };
+
+    pullRemoteConfig();
+    const timer = setInterval(pullRemoteConfig, 20000);
+    return () => clearInterval(timer);
   }, []);
 
   const setSelectedCarCategory = useCallback((category: CarCategoryId) => {

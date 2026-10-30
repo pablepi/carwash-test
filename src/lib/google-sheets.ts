@@ -42,8 +42,8 @@ export async function sendBookingToGoogleSheets(
 ): Promise<{ success: boolean; message?: string }> {
   const url = scriptUrl?.trim() || DEFAULT_GOOGLE_SHEETS_URL;
   const rawPhone = (booking.clientPhone || '').trim();
-  // Prefix with apostrophe if it starts with '+' so Google Sheets never parses it as a formula (#ERROR!)
-  const safePhone = rawPhone.startsWith('+') ? `'${rawPhone}` : rawPhone;
+  // Always prefix with apostrophe if not already present so Google Sheets never parses it as a formula (#ERROR!)
+  const safePhone = rawPhone ? (rawPhone.startsWith("'") ? rawPhone : `'${rawPhone}`) : '';
 
   const payload = {
     action: 'createBooking',

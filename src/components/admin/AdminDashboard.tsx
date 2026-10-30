@@ -28,6 +28,7 @@ import {
   CloudArrowDown,
   SignOut,
   Warning,
+  CaretDown,
 } from '@phosphor-icons/react';
 import { Badge } from '../common/Badge';
 import { GlassButton } from '../common/GlassButton';
@@ -434,6 +435,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const [isLoadingRemote, setIsLoadingRemote] = useState(false);
   const [isSyncingConfig, setIsSyncingConfig] = useState(false);
   const [isCopiedScript, setIsCopiedScript] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  // Local status overrides so user completions persist across 20s polling cycles
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, AdminBooking['status']>>(() => {
+    try {
+      const raw = localStorage.getItem('apex_status_overrides');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const [googleSheetsUrlInput, setGoogleSheetsUrlInput] = useState<string>(() => {
     const raw = (siteConfig as any).integrations?.googleSheetsUrl;
@@ -557,7 +569,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               car_model: b.car_model || b.carModel || 'Автомобиль',
               service_title: b.service_title || b.serviceTitle || 'Услуга мойки',
               start_time: startH,
-              end_time: b.end_time ? b.end_time.slice(11, 16) : endStr,
+              end_time: endStr,
               status: b.status || 'pending',
               date: 'Сегодня',
             };
@@ -614,8 +626,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
       else if (s === 'done' || s.includes('завершен')) cleanStatus = 'done';
       else if (s === 'cancelled' || s.includes('отмен')) cleanStatus = 'cancelled';
 
+      const recId = b.id || b.booking_number;
+      const finalStatus = statusOverrides[recId] || (b.booking_number ? statusOverrides[b.booking_number] : undefined) || cleanStatus;
+
       return {
-        id: b.id || b.booking_number,
+        id: recId,
         box_name: cleanBoxName,
         box_id: cleanBoxId,
         client_name: b.clientName,
@@ -624,11 +639,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
         service_title: b.serviceTitle,
         start_time: startFormatted,
         end_time: endStr,
-        status: cleanStatus,
+        status: finalStatus,
         date: dayLabel,
       };
     });
-  }, [remoteBookings]);
+  }, [remoteBookings, statusOverrides]);
 
   // Combined bookings for Timeline
   const bookings = useMemo((): AdminBooking[] => {
@@ -870,12 +885,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
 
   // Handle Box Timeline Status & Movement
   const handleStatusChange = (id: string, newStatus: AdminBooking['status']) => {
+    setStatusOverrides((prev) => {
+      const next = { ...prev, [id]: newStatus };
+      try {
+        localStorage.setItem('apex_status_overrides', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
     setLocalTimelineBookings((prev: AdminBooking[]) =>
       prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
     );
     setRemoteBookings((prev: RemoteBookingRecord[]) =>
       prev.map((b) => (b.id === id || b.booking_number === id ? { ...b, status: newStatus } : b))
     );
+
+    try {
+      const rawHistory = localStorage.getItem('apex_bookings_history');
+      if (rawHistory) {
+        const historyArr = JSON.parse(rawHistory);
+        if (Array.isArray(historyArr)) {
+          const updatedArr = historyArr.map((item: any) =>
+            item.id === id || item.token === id || item.booking_number === id
+              ? { ...item, status: newStatus }
+              : item
+          );
+          localStorage.setItem('apex_bookings_history', JSON.stringify(updatedArr));
+        }
+      }
+    } catch {}
+
+    showToast(newStatus === 'done' ? 'Запись завершена и убрана из таймлайна' : `Статус записи обновлен`);
   };
 
   const handleMoveBooking = (id: string, newBoxName: string, newStartTime: string) => {
@@ -993,16 +1033,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     showToast(`Шаг сетки слотов: ${step} мин`);
   };
 
+  const syncFullConfigToRemote = useCallback((partial: Partial<any>) => {
+    updateSiteConfig(partial);
+    const merged = { ...siteConfig, ...partial };
+    saveConfigToGoogleSheets(merged, googleSheetsUrlInput)
+      .then((res) => {
+        if (res.success) {
+          console.log('Site config successfully synchronized to Google Sheets');
+        }
+      })
+      .catch((err) => console.warn('Could not sync config to sheets:', err));
+  }, [siteConfig, updateSiteConfig, googleSheetsUrlInput]);
+
   const handleApplyColor = (colorHex: string) => {
     setAccentColorInput(colorHex);
     setCustomColorText(colorHex);
-    updateSiteConfig({ theme: { ...siteConfig.theme, accentColor: colorHex } });
+    syncFullConfigToRemote({ theme: { ...siteConfig.theme, accentColor: colorHex } });
     showToast(`Главный цвет сайта обновлен на ${colorHex}`);
   };
 
   const handleApplyHeroImage = (url: string) => {
     setHeroImageInput(url);
-    updateSiteConfig({ branding: { ...siteConfig.branding, heroImageUrl: url } });
+    syncFullConfigToRemote({ branding: { ...siteConfig.branding, heroImageUrl: url } });
     showToast('Фото главного экрана обновлено');
   };
 
@@ -1035,7 +1087,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     }
     const updated = siteServicesList.filter((s) => s.id !== id);
     setSiteServicesList(updated);
-    updateSiteConfig({ services: updated });
+    syncFullConfigToRemote({ services: updated });
     showToast('Услуга удалена из каталога');
   };
 
@@ -1058,7 +1110,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
 
     const updated = [newSvc, ...siteServicesList];
     setSiteServicesList(updated);
-    updateSiteConfig({ services: updated });
+    syncFullConfigToRemote({ services: updated });
     setIsAddServiceOpen(false);
     setNewSvcName('');
     setNewSvcDesc('');
@@ -1066,7 +1118,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   };
 
   const handleSaveAllSettings = () => {
-    updateSiteConfig({
+    const updatedFull = {
       branding: {
         ...siteConfig.branding,
         name: brandingName,
@@ -1102,7 +1154,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
       integrations: {
         googleSheetsUrl: googleSheetsUrlInput.trim(),
       },
-    });
+    };
+    syncFullConfigToRemote(updatedFull);
     showToast('Все настройки и тарифы успешно сохранены');
   };
 
@@ -1168,17 +1221,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     }
   };
 
-  const activeBookings = viewMode === 'day'
-    ? bookings.filter((b) => b.date === 'Сегодня' || b.date === new Date().toISOString().slice(0, 10))
-    : bookings;
+  const activeBookings = useMemo(() => {
+    const pool = viewMode === 'day'
+      ? bookings.filter((b) => b.date === 'Сегодня' || b.date === new Date().toISOString().slice(0, 10))
+      : bookings;
+    return pool.filter((b) => b.status !== 'done' && b.status !== 'cancelled');
+  }, [bookings, viewMode]);
 
   const inProgressCount = activeBookings.filter((b) => b.status === 'in_progress').length;
   const completedCount = activeBookings.filter((b) => b.status === 'completed').length;
   const pendingCount = activeBookings.filter((b) => b.status === 'pending').length;
-  const totalCount = activeBookings.filter((b) => b.status !== 'cancelled').length;
+  const totalCount = activeBookings.length;
 
   return (
-    <div className="min-h-screen bg-base-darkest text-text-primary pb-28 pt-4 sm:pt-6 font-sans">
+    <div className="min-h-screen bg-base-darkest text-text-primary pb-28 pt-4 sm:pt-6 font-sans overflow-x-hidden w-full max-w-full">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1C1C1E] border border-white/20 px-4 py-3 shadow-2xl backdrop-blur-md animate-fade-in-up">
@@ -1189,7 +1245,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
         </div>
       )}
 
-      <div className="mx-auto max-w-6xl px-3 sm:px-6">
+      <div className="mx-auto max-w-6xl px-3 sm:px-6 w-full max-w-full min-w-0 space-y-6">
         {/* Top Header Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-white/[0.08]">
           <div>
@@ -1205,26 +1261,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             </h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {/* View client website button */}
+          <div className="flex flex-wrap items-center gap-2 max-w-full">
+            {/* Refresh Google Sheets bookings */}
             <button
               onClick={loadBookingsFromGoogle}
               disabled={isLoadingRemote}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-text-secondary hover:text-white transition-all disabled:opacity-50"
-              title="Обновить записи из Google Таблицы"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-text-secondary hover:text-white transition-all disabled:opacity-50 shrink-0"
+              title="Обновить записи"
             >
               <ArrowsClockwise size={15} className={isLoadingRemote ? 'animate-spin text-accent-blue' : ''} />
-              <span className="hidden sm:inline">Таблица:</span>
-              <span className="text-accent-blue font-bold">
-                {remoteBookings.length > 0 ? `${remoteBookings.length} записей` : 'Синхронизировать'}
-              </span>
+              <span>Обновить</span>
             </button>
 
+            {/* View client website button */}
             <button
               onClick={() => navigate(`/s/${currentSlug}`)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-text-secondary hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-text-secondary hover:text-white transition-colors shrink-0"
+              title="Перейти на клиентский сайт автомойки"
             >
-              <span>Сайт (/s/{currentSlug})</span>
+              <span>Перейти на сайт</span>
               <ArrowSquareOut size={15} />
             </button>
 
@@ -1610,7 +1665,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             </div>
 
             {/* SECTION 1: BRANDING & HEADERS */}
-            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl">
+            <div className="astryx-card p-4 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl w-full max-w-full min-w-0 overflow-hidden">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkle size={18} className="text-accent-blue" weight="bold" />
                 <h2 className="text-lg sm:text-xl font-bold text-white">
@@ -1693,7 +1748,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             </div>
 
             {/* SECTION 2: ACCENT COLOR SELECTION */}
-            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl">
+            <div className="astryx-card p-4 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl w-full max-w-full min-w-0 overflow-hidden">
               <div className="flex items-center gap-2 mb-2">
                 <Palette size={18} className="text-accent-blue" weight="bold" />
                 <h2 className="text-lg sm:text-xl font-bold text-white">
@@ -1769,7 +1824,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             </div>
 
             {/* SECTION 3: CONTACTS & SCHEDULE */}
-            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl">
+            <div className="astryx-card p-4 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl w-full max-w-full min-w-0 overflow-hidden">
               <div className="flex items-center gap-2 mb-2">
                 <MapPin size={18} className="text-accent-blue" weight="bold" />
                 <h2 className="text-lg sm:text-xl font-bold text-white">
@@ -1875,7 +1930,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             </div>
 
             {/* SECTION 4: WORKFLOW & SCHEDULE */}
-            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl space-y-6">
+            <div className="astryx-card p-4 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl space-y-6 w-full max-w-full min-w-0 overflow-hidden">
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
                   <SlidersHorizontal size={18} className="text-accent-blue" weight="bold" />
@@ -2071,7 +2126,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             </div>
 
             {/* SECTION 5: HERO BACKGROUND PHOTO */}
-            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl">
+            <div className="astryx-card p-4 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl w-full max-w-full min-w-0 overflow-hidden">
               <div className="flex items-center gap-2 mb-2">
                 <ImageIcon size={18} className="text-accent-blue" weight="bold" />
                 <h2 className="text-lg sm:text-xl font-bold text-white">
@@ -2142,7 +2197,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             </div>
 
             {/* SECTION 6: SERVICES & PRICING BY CAR CATEGORY */}
-            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl">
+            <div className="astryx-card p-4 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl w-full max-w-full min-w-0 overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -2415,15 +2470,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               </div>
 
               {/* Bottom Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 mt-6 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={handleResetToDefaults}
-                  className="text-xs text-rose-400 hover:text-rose-300 hover:underline"
-                >
-                  Сбросить все настройки автомойки к стандартным
-                </button>
-
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 mt-6 border-t border-white/10">
                 <button
                   type="button"
                   onClick={handleSaveAllSettings}
@@ -2434,202 +2481,244 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               </div>
             </div>
 
-            {/* SECTION 7: ADMIN ACCESS & PASSWORD */}
-            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Key size={18} className="text-accent-blue" weight="bold" />
-                <h2 className="text-lg sm:text-xl font-bold text-white">
-                  Доступ в панель (логин и пароль)
-                </h2>
-              </div>
-              <p className="text-xs text-[#86868B] mb-5">
-                Вы можете изменить логин и пароль для входа в панель управления прямо здесь.
-              </p>
-
-              <form onSubmit={handleSaveCredentials} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
-                    Логин для входа
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={adminLoginInput}
-                    onChange={(e) => setAdminLoginInput(e.target.value)}
-                    className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-accent-blue"
-                  />
+            {/* COLLAPSIBLE SECTION: ADVANCED SETTINGS (HIDDEN BY DEFAULT) */}
+            <div className="astryx-card p-4 sm:p-6 bg-[#161618] border border-white/10 rounded-2xl w-full max-w-full">
+              <button
+                type="button"
+                onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+                className="w-full flex items-center justify-between text-left group transition-colors py-1"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-blue/15 text-accent-blue shrink-0">
+                    <SlidersHorizontal size={20} weight="bold" />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-white group-hover:text-accent-blue transition-colors">
+                      Расширенные настройки
+                    </h2>
+                    <p className="text-xs text-[#86868B]">
+                      Google Таблица, Apps Script, пароль администратора и сброс системы
+                    </p>
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
-                    Пароль для входа
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={adminPasswordInput}
-                    onChange={(e) => setAdminPasswordInput(e.target.value)}
-                    className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-accent-blue"
-                  />
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#86868B] group-hover:text-white transition-colors shrink-0">
+                  <span>{isAdvancedOpen ? 'Скрыть' : 'Показать'}</span>
+                  <CaretDown size={16} className={`transition-transform duration-200 ${isAdvancedOpen ? 'rotate-180' : ''}`} />
                 </div>
+              </button>
 
-                <div className="sm:col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
-                  <div className="text-[11px] text-[#86868B]">
-                    {isCredsCustom ? (
-                      <span className="text-emerald-400 font-medium">✓ Используется измененный пароль</span>
-                    ) : (
-                      <span>Используются стандартные логин и пароль</span>
-                    )}
+              {isAdvancedOpen && (
+                <div className="mt-6 space-y-6 pt-6 border-t border-white/10">
+                  {/* SECTION 7: ADMIN ACCESS & PASSWORD */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Key size={18} className="text-accent-blue" weight="bold" />
+                      <h3 className="text-base font-bold text-white">
+                        Доступ в панель (логин и пароль)
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#86868B] mb-3">
+                      Вы можете изменить логин и пароль для входа в панель управления прямо здесь.
+                    </p>
+
+                    <form onSubmit={handleSaveCredentials} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
+                          Логин для входа
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={adminLoginInput}
+                          onChange={(e) => setAdminLoginInput(e.target.value)}
+                          className="w-full bg-[#161618] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-accent-blue"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
+                          Пароль для входа
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={adminPasswordInput}
+                          onChange={(e) => setAdminPasswordInput(e.target.value)}
+                          className="w-full bg-[#161618] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-accent-blue"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+                        <div className="text-[11px] text-[#86868B]">
+                          {isCredsCustom ? (
+                            <span className="text-emerald-400 font-medium">✓ Используется измененный пароль</span>
+                          ) : (
+                            <span>Используются стандартные логин и пароль</span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {isCredsCustom && (
+                            <button
+                              type="button"
+                              onClick={handleResetCredentials}
+                              className="px-3.5 py-2 rounded-xl text-xs text-[#86868B] hover:text-white"
+                            >
+                              Сбросить пароль
+                            </button>
+                          )}
+                          <button
+                            type="submit"
+                            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-all shadow-sm"
+                          >
+                            Сохранить пароль
+                          </button>
+                        </div>
+                      </div>
+                    </form>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {isCredsCustom && (
+                  {/* SECTION 8: GOOGLE SHEETS DATABASE */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Database size={18} className="text-accent-blue" weight="bold" />
+                      <h3 className="text-base font-bold text-white">
+                        База данных (Google Таблицы)
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#86868B]">
+                      Все бронирования с сайта автоматически сохраняются в вашей онлайн-таблице Google Sheets через Apps Script Web App.
+                    </p>
+
+                    <div>
+                      <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
+                        URL веб-приложения Google Apps Script (exec)
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="url"
+                          value={googleSheetsUrlInput}
+                          onChange={(e) => setGoogleSheetsUrlInput(e.target.value)}
+                          placeholder="https://script.google.com/macros/s/.../exec"
+                          className="flex-1 bg-[#161618] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-accent-blue"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={isTestingSheets}
+                            onClick={handleTestSheets}
+                            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-all disabled:opacity-50"
+                          >
+                            {isTestingSheets ? 'Проверка...' : 'Проверить связь'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSaveGoogleSheetsUrl}
+                            className="px-4 py-2.5 rounded-xl bg-accent-blue hover:brightness-110 text-xs font-bold text-white transition-all shadow-md"
+                          >
+                            Сохранить
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {sheetsTestResult && (
+                      <div
+                        className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                          sheetsTestResult.ok
+                            ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
+                            : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
+                        }`}
+                      >
+                        {sheetsTestResult.ok ? (
+                          <Check size={16} weight="bold" className="shrink-0 text-emerald-400" />
+                        ) : (
+                          <X size={16} weight="bold" className="shrink-0 text-rose-400" />
+                        )}
+                        <span>{sheetsTestResult.message}</span>
+                      </div>
+                    )}
+
+                    {/* Multi-device sync actions */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                       <button
                         type="button"
-                        onClick={handleResetCredentials}
-                        className="px-3.5 py-2 rounded-xl text-xs text-[#86868B] hover:text-white"
+                        disabled={isSyncingConfig}
+                        onClick={handleSyncConfigToSheets}
+                        className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-xs font-semibold text-white transition-all disabled:opacity-50"
                       >
-                        Сбросить пароль
+                        <CloudArrowUp size={16} className="text-accent-blue" weight="bold" />
+                        <span>{isSyncingConfig ? 'Синхронизация...' : 'Сохранить настройки в таблицу'}</span>
                       </button>
-                    )}
-                    <button
-                      type="submit"
-                      className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-all shadow-sm"
-                    >
-                      Сохранить пароль
-                    </button>
+                      <button
+                        type="button"
+                        disabled={isSyncingConfig}
+                        onClick={handleLoadConfigFromSheets}
+                        className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-xs font-semibold text-white transition-all disabled:opacity-50"
+                      >
+                        <CloudArrowDown size={16} className="text-emerald-400" weight="bold" />
+                        <span>Загрузить настройки из таблицы</span>
+                      </button>
+                    </div>
+
+                    {/* Ready script template accordion/modal button */}
+                    <div className="p-4 rounded-2xl bg-[#161618] border border-white/10 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Code size={18} className="text-accent-blue" weight="bold" />
+                          <span className="text-xs font-bold text-white">
+                            Код Google Apps Script (для работы со всех устройств)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_TEMPLATE);
+                            setIsCopiedScript(true);
+                            showToast('Код скрипта скопирован в буфер!');
+                            setTimeout(() => setIsCopiedScript(false), 2500);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-blue hover:brightness-110 text-xs font-bold text-white transition-all"
+                        >
+                          {isCopiedScript ? <Check size={14} weight="bold" /> : <Copy size={14} />}
+                          <span>{isCopiedScript ? 'Скопировано!' : 'Скопировать готовый код'}</span>
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-[#86868B] leading-relaxed">
+                        Чтобы база данных отображалась в админке с разных устройств (телефон, планшет, ПК), вставьте этот код в Apps Script вашей таблицы (Расширения → Apps Script) и нажмите «Новое развертывание» (Веб-приложение, доступ: Все).
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#86868B] border-t border-white/[0.06]">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34C759]" />
+                        <span>
+                          Загружено из Google Таблицы: <strong className="text-white">{remoteBookings.length}</strong> записей
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => window.open(googleSheetsUrlInput, '_blank')}
+                        className="inline-flex items-center gap-1 text-accent-blue hover:underline font-mono"
+                      >
+                        <span>Проверить эндпоинт</span>
+                        <ArrowSquareOut size={13} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </form>
-            </div>
 
-            {/* SECTION 8: GOOGLE SHEETS DATABASE */}
-            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl space-y-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Database size={18} className="text-accent-blue" weight="bold" />
-                <h2 className="text-lg sm:text-xl font-bold text-white">
-                  База данных (Google Таблицы)
-                </h2>
-              </div>
-              <p className="text-xs text-[#86868B]">
-                Все бронирования с сайта автоматически сохраняются в вашей онлайн-таблице Google Sheets через Apps Script Web App.
-              </p>
-
-              <div>
-                <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
-                  URL веб-приложения Google Apps Script (exec)
-                </label>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="url"
-                    value={googleSheetsUrlInput}
-                    onChange={(e) => setGoogleSheetsUrlInput(e.target.value)}
-                    placeholder="https://script.google.com/macros/s/.../exec"
-                    className="flex-1 bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-accent-blue"
-                  />
-                  <div className="flex items-center gap-2">
+                  {/* Reset to defaults button */}
+                  <div className="pt-4 border-t border-white/10 flex justify-end">
                     <button
                       type="button"
-                      disabled={isTestingSheets}
-                      onClick={handleTestSheets}
-                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-all disabled:opacity-50"
+                      onClick={handleResetToDefaults}
+                      className="text-xs text-rose-400 hover:text-rose-300 hover:underline transition-colors"
                     >
-                      {isTestingSheets ? 'Проверка...' : 'Проверить связь'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSaveGoogleSheetsUrl}
-                      className="px-4 py-2.5 rounded-xl bg-accent-blue hover:brightness-110 text-xs font-bold text-white transition-all shadow-md"
-                    >
-                      Сохранить
+                      Сбросить все настройки автомойки к заводским
                     </button>
                   </div>
-                </div>
-              </div>
-
-              {sheetsTestResult && (
-                <div
-                  className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
-                    sheetsTestResult.ok
-                      ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
-                      : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
-                  }`}
-                >
-                  {sheetsTestResult.ok ? (
-                    <Check size={16} weight="bold" className="shrink-0 text-emerald-400" />
-                  ) : (
-                    <X size={16} weight="bold" className="shrink-0 text-rose-400" />
-                  )}
-                  <span>{sheetsTestResult.message}</span>
                 </div>
               )}
-
-              {/* Multi-device sync actions */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <button
-                  type="button"
-                  disabled={isSyncingConfig}
-                  onClick={handleSyncConfigToSheets}
-                  className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-xs font-semibold text-white transition-all disabled:opacity-50"
-                >
-                  <CloudArrowUp size={16} className="text-accent-blue" weight="bold" />
-                  <span>{isSyncingConfig ? 'Синхронизация...' : 'Сохранить настройки в таблицу'}</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={isSyncingConfig}
-                  onClick={handleLoadConfigFromSheets}
-                  className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-xs font-semibold text-white transition-all disabled:opacity-50"
-                >
-                  <CloudArrowDown size={16} className="text-emerald-400" weight="bold" />
-                  <span>Загрузить настройки из таблицы</span>
-                </button>
-              </div>
-
-              {/* Ready script template accordion/modal button */}
-              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Code size={18} className="text-accent-blue" weight="bold" />
-                    <span className="text-xs font-bold text-white">
-                      Код Google Apps Script (для работы со всех устройств)
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_TEMPLATE);
-                      setIsCopiedScript(true);
-                      showToast('Код скрипта скопирован в буфер!');
-                      setTimeout(() => setIsCopiedScript(false), 2500);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-blue hover:brightness-110 text-xs font-bold text-white transition-all"
-                  >
-                    {isCopiedScript ? <Check size={14} weight="bold" /> : <Copy size={14} />}
-                    <span>{isCopiedScript ? 'Скопировано!' : 'Скопировать готовый код'}</span>
-                  </button>
-                </div>
-                <p className="text-[11px] text-[#86868B] leading-relaxed">
-                  Чтобы база данных отображалась в админке с разных устройств (телефон, планшет, ПК), вставьте этот код в Apps Script вашей таблицы (Расширения → Apps Script) и нажмите «Новое развертывание» (Веб-приложение, доступ: Все).
-                </p>
-              </div>
-
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#86868B] border-t border-white/[0.06]">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34C759]" />
-                  <span>
-                    Загружено из Google Таблицы: <strong className="text-white">{remoteBookings.length}</strong> записей
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => window.open(googleSheetsUrlInput, '_blank')}
-                  className="inline-flex items-center gap-1 text-accent-blue hover:underline font-mono"
-                >
-                  <span>Проверить эндпоинт</span>
-                  <ArrowSquareOut size={13} />
-                </button>
-              </div>
             </div>
           </div>
         )}

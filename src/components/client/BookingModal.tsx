@@ -113,6 +113,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       const token = `AD-${tokenNumber}`;
 
       const startDate = selectedSlotIso ? new Date(selectedSlotIso) : new Date();
+      const localStartTime = selectedSlotTimeStr || (startDate ? `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}` : '12:00');
+      const [startH, startM] = localStartTime.split(':').map(Number);
+      const endTotalMins = (startH || 12) * 60 + (startM || 0) + activeDuration;
+      const endH = Math.floor(endTotalMins / 60) % 24;
+      const endM = endTotalMins % 60;
+      const localEndTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
+
       const endDate = new Date(startDate.getTime() + activeDuration * 60 * 1000);
       const startTimeIso = !isNaN(startDate.getTime()) ? startDate.toISOString() : new Date().toISOString();
       const endTimeIso = !isNaN(endDate.getTime()) ? endDate.toISOString() : new Date(Date.now() + activeDuration * 60 * 1000).toISOString();
@@ -131,9 +138,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         box_name: 'Бокс 1',
         startTimeIso,
         endTimeIso,
-        start_time: startTimeIso,
-        end_time: endTimeIso,
-        timeStr: selectedSlotTimeStr || (startDate ? `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}` : '12:00'),
+        start_time: localStartTime,
+        end_time: localEndTime,
+        timeStr: localStartTime,
         serviceTitle: `${activeServiceConfig.name} (${categoryName})`,
         service_title: `${activeServiceConfig.name} (${categoryName})`,
         servicePrice: activePrice,
