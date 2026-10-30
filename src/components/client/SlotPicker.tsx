@@ -10,7 +10,7 @@ import { ServiceItem } from './ServiceCatalog';
 interface SlotPickerProps {
   tenant: TenantConfig;
   selectedService: ServiceItem | null;
-  onSlotSelected: (slotDateTimeIso: string, slotTimeStr: string) => void;
+  onSlotSelected: (slotDateTimeIso: string, slotTimeStr: string, dateStr?: string, boxName?: string) => void;
   selectedSlotIso?: string;
   isCompact?: boolean;
 }
@@ -222,7 +222,7 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
                     type="button"
                     key={slot.timeStr}
                     disabled={isDisabled}
-                    onClick={() => onSlotSelected(slot.dateTimeIso, slot.timeStr)}
+                    onClick={() => onSlotSelected(slot.dateTimeIso, slot.timeStr, targetDateStr, slot.boxName)}
                     className={`flex flex-col items-center justify-center py-2 px-1.5 rounded-xl border text-sm font-mono font-semibold transition-all duration-150 tabular-nums ${
                       isSelected
                         ? 'bg-accent-blue text-white border-accent-blue shadow-[0_0_16px_-3px_var(--apple-accent-blue)] font-bold ring-2 ring-accent-blue/30'

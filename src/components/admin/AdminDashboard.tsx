@@ -502,60 +502,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
       .catch(() => {});
   }, [googleSheetsUrlInput, updateSiteConfig]);
 
-  // Base timeline bookings for initial display
+  // Local bookings from current browser session/storage (no fake mock entries!)
   const [localTimelineBookings, setLocalTimelineBookings] = useState<AdminBooking[]>(() => {
-    const baseBookings: AdminBooking[] = [
-      {
-        id: 'b-101',
-        box_name: 'Бокс 1',
-        box_id: 'box-1',
-        client_name: 'Константин Сафронов',
-        client_phone: '+7 (916) 123-45-67',
-        car_model: 'Porsche 911 [А 777 АА 777]',
-        service_title: 'Детейлинг-мойка Премиум (3 фазы)',
-        start_time: '11:00',
-        end_time: '12:30',
-        status: 'in_progress',
-        date: 'Сегодня',
-      },
-      {
-        id: 'b-102',
-        box_name: 'Бокс 2',
-        box_id: 'box-2',
-        client_name: 'Михаил Захаров',
-        client_phone: '+7 (925) 333-22-11',
-        car_model: 'BMW M5 [О 555 ОО 77]',
-        service_title: 'Трёхфазная нано-мойка',
-        start_time: '13:00',
-        end_time: '14:00',
-        status: 'pending',
-        date: 'Сегодня',
-      },
-      {
-        id: 'b-103',
-        box_name: 'Бокс 3',
-        box_id: 'box-3',
-        client_name: 'Артём Лебедев',
-        client_phone: '+7 (903) 777-88-99',
-        car_model: 'Audi RS6 [М 999 ММ 99]',
-        service_title: 'Комплекс кузов + салон',
-        start_time: '14:30',
-        end_time: '16:00',
-        status: 'pending',
-        date: 'Сегодня',
-      },
-    ];
-
     try {
       const raw = localStorage.getItem('apex_bookings_history');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          const userBookings: AdminBooking[] = parsed.map((b: any, idx: number) => {
-            const startH = b.timeStr || (b.start_time ? b.start_time.slice(11, 16) : '12:00');
-            const [h, m] = startH.split(':').map(Number);
-            const duration = b.serviceDurationMinutes || 60;
-            const endTotalMins = (h || 12) * 60 + (m || 0) + duration;
+          return parsed.map((b: any, idx: number) => {
+            const startH = b.timeStr || (b.start_time && !b.start_time.includes('T') ? b.start_time : '12:00');
+            const [h, m] = startH.split(':').map((v: any) => parseInt(v, 10) || 0);
+            const duration = b.serviceDurationMinutes || 45;
+            const endTotalMins = h * 60 + m + duration;
             const endH = Math.floor(endTotalMins / 60) % 24;
             const endM = endTotalMins % 60;
             const endStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
@@ -571,41 +529,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               start_time: startH,
               end_time: endStr,
               status: b.status || 'pending',
-              date: 'Сегодня',
+              date: b.date || 'Сегодня',
             };
           });
-          return [...userBookings, ...baseBookings];
         }
       }
     } catch (e) {}
 
-    return baseBookings;
+    return [];
   });
 
   // Mapped remote bookings from Google Sheets into AdminBooking format
   const mappedRemoteAdminBookings = useMemo((): AdminBooking[] => {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date());
+    const tomorrowDate = new Date(Date.now() + 24 * 3600 * 1000);
+    const tomorrowStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(tomorrowDate);
 
     return remoteBookings.map((b) => {
       // Clean start and end times
       const timeStr = String(b.timeSlot || '12:00').trim();
-      const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
-      const h = timeMatch ? parseInt(timeMatch[1], 10) : 12;
-      const m = timeMatch ? parseInt(timeMatch[2], 10) : 0;
+      const [h, m] = timeStr.split(':').map((v) => parseInt(v, 10) || 0);
       const startFormatted = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-      const endTotalMins = h * 60 + m + 60;
+      const endTotalMins = h * 60 + m + 45;
       const endH = Math.floor(endTotalMins / 60) % 24;
       const endM = endTotalMins % 60;
       const endStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
 
       // Clean date label
       let dayLabel = 'Сегодня';
-      if (!b.date || b.date === todayStr) {
+      if (!b.date || b.date === todayStr || b.date === 'Сегодня') {
         dayLabel = 'Сегодня';
-      } else if (b.date === tomorrowStr) {
+      } else if (b.date === tomorrowStr || b.date === 'Завтра') {
         dayLabel = 'Завтра';
       } else {
         dayLabel = b.date;
@@ -629,6 +583,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
       const recId = b.id || b.booking_number;
       const finalStatus = statusOverrides[recId] || (b.booking_number ? statusOverrides[b.booking_number] : undefined) || cleanStatus;
 
+      let cleanServiceTitle = b.serviceTitle || 'Комплекс мойки';
+      if (/^\d+$/.test(cleanServiceTitle.trim())) {
+        cleanServiceTitle = `Комплекс мойки (${cleanServiceTitle} ₽)`;
+      }
+
       return {
         id: recId,
         box_name: cleanBoxName,
@@ -636,7 +595,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
         client_name: b.clientName,
         client_phone: b.clientPhone,
         car_model: b.carModel,
-        service_title: b.serviceTitle,
+        service_title: cleanServiceTitle,
         start_time: startFormatted,
         end_time: endStr,
         status: finalStatus,
@@ -1222,8 +1181,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   };
 
   const activeBookings = useMemo(() => {
+    const todayMoscow = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date());
     const pool = viewMode === 'day'
-      ? bookings.filter((b) => b.date === 'Сегодня' || b.date === new Date().toISOString().slice(0, 10))
+      ? bookings.filter((b) => b.date === 'Сегодня' || b.date === todayMoscow)
       : bookings;
     return pool.filter((b) => b.status !== 'done' && b.status !== 'cancelled');
   }, [bookings, viewMode]);

@@ -53,6 +53,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   const [selectedSlotIso, setSelectedSlotIso] = useState<string>('');
   const [selectedSlotTimeStr, setSelectedSlotTimeStr] = useState<string>('');
+  const [selectedDateStr, setSelectedDateStr] = useState<string>('');
+  const [selectedBoxName, setSelectedBoxName] = useState<string>('Бокс 1');
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('+7 (');
@@ -112,14 +114,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       const tokenNumber = Math.floor(1000 + Math.random() * 9000);
       const token = `AD-${tokenNumber}`;
 
-      const startDate = selectedSlotIso ? new Date(selectedSlotIso) : new Date();
-      const localStartTime = selectedSlotTimeStr || (startDate ? `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}` : '12:00');
-      const [startH, startM] = localStartTime.split(':').map(Number);
+      const moscowToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date());
+      const finalDateStr = selectedDateStr || moscowToday;
+      const finalTimeStr = selectedSlotTimeStr || '12:00';
+      const finalBoxName = selectedBoxName || 'Бокс 1';
+      const finalBoxId = `box-${finalBoxName.replace(/\D/g, '') || '1'}`;
+
+      const [startH, startM] = finalTimeStr.split(':').map(Number);
       const endTotalMins = (startH || 12) * 60 + (startM || 0) + activeDuration;
       const endH = Math.floor(endTotalMins / 60) % 24;
       const endM = endTotalMins % 60;
       const localEndTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
 
+      const startDate = selectedSlotIso ? new Date(selectedSlotIso) : new Date();
       const endDate = new Date(startDate.getTime() + activeDuration * 60 * 1000);
       const startTimeIso = !isNaN(startDate.getTime()) ? startDate.toISOString() : new Date().toISOString();
       const endTimeIso = !isNaN(endDate.getTime()) ? endDate.toISOString() : new Date(Date.now() + activeDuration * 60 * 1000).toISOString();
@@ -132,15 +139,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         booking_number: token,
         cancellation_token: token,
         tenantSlug: tenant.slug,
-        boxId: 'box-1',
-        box_id: 'box-1',
-        boxName: 'Бокс 1',
-        box_name: 'Бокс 1',
+        boxId: finalBoxId,
+        box_id: finalBoxId,
+        boxName: finalBoxName,
+        box_name: finalBoxName,
         startTimeIso,
         endTimeIso,
-        start_time: localStartTime,
+        start_time: finalTimeStr,
         end_time: localEndTime,
-        timeStr: localStartTime,
+        timeStr: finalTimeStr,
+        date: finalDateStr,
         serviceTitle: `${activeServiceConfig.name} (${categoryName})`,
         service_title: `${activeServiceConfig.name} (${categoryName})`,
         servicePrice: activePrice,
@@ -170,13 +178,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
       // Send booking directly to Google Sheets database asynchronously
       const googleSheetsUrl = (config as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL;
-      const dateOnlyStr = startDate ? startDate.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
-      const timeOnlyStr = selectedSlotTimeStr || (startDate ? `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}` : '12:00');
 
       sendBookingToGoogleSheets(
         {
-          date: dateOnlyStr,
-          timeSlot: timeOnlyStr,
+          date: finalDateStr,
+          timeSlot: finalTimeStr,
           clientName: name.trim(),
           clientPhone: phone,
           carModel: fullCarModel,
@@ -184,7 +190,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           totalPrice: activePrice,
           booking_number: token,
           cancellation_token: token,
-          boxName: 'Бокс 1',
+          boxName: finalBoxName,
           status: 'pending',
         },
         googleSheetsUrl
@@ -288,9 +294,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               tenant={tenant}
               selectedService={adaptedServiceItem}
               selectedSlotIso={selectedSlotIso}
-              onSlotSelected={(iso, timeStr) => {
+              onSlotSelected={(iso, timeStr, dateStr, boxName) => {
                 setSelectedSlotIso(iso);
                 setSelectedSlotTimeStr(timeStr);
+                if (dateStr) setSelectedDateStr(dateStr);
+                if (boxName) setSelectedBoxName(boxName);
                 setErrorMsg(null);
               }}
               isCompact={true}

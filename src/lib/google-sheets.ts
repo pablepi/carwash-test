@@ -107,15 +107,16 @@ export interface FetchBookingsResult {
 function normalizeDate(raw: any): string {
   if (!raw) return '';
   const s = String(raw).trim();
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   try {
     const clean = s.replace(/\s*\(.*\)/, '');
     const d = new Date(clean);
     if (!isNaN(d.getTime())) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
+      // In Google Sheets created with America/New_York (GMT-4/GMT-5) timezone,
+      // midnight in Moscow corresponds to 17:00 of the previous day in New York.
+      // Convert UTC timestamp to Moscow time (+3 hours)
+      const moscowDate = new Date(d.getTime() + 3 * 3600 * 1000);
+      return moscowDate.toISOString().slice(0, 10);
     }
   } catch {}
   return s;
@@ -124,6 +125,25 @@ function normalizeDate(raw: any): string {
 function normalizeTime(raw: any): string {
   if (!raw) return '12:00';
   const s = String(raw).trim();
+  const simpleMatch = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (simpleMatch) {
+    return simpleMatch[1].padStart(2, '0') + ':' + simpleMatch[2];
+  }
+  // Full Date string from Google Sheets (e.g. Sat Dec 30 1899 12:59:43 GMT-0500)
+  if (s.includes('GMT') || s.includes('1899') || s.includes('T')) {
+    try {
+      const clean = s.replace(/\s*\(.*\)/, '');
+      const d = new Date(clean);
+      if (!isNaN(d.getTime())) {
+        // d is in UTC, Moscow is UTC+3. Round minutes to nearest 5
+        let totalMins = d.getUTCHours() * 60 + d.getUTCMinutes() + 180;
+        totalMins = Math.round(totalMins / 5) * 5;
+        const h = Math.floor(totalMins / 60) % 24;
+        const m = totalMins % 60;
+        return h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0');
+      }
+    } catch {}
+  }
   const timeMatch = s.match(/(\d{1,2}):(\d{2})/);
   if (timeMatch) {
     return timeMatch[1].padStart(2, '0') + ':' + timeMatch[2];
@@ -341,7 +361,7 @@ function doGet(e) {
 
   // 2. Получение всех записей для админки (для любых устройств)
   var sheet = getBookingsSheet(ss);
-  var data = sheet.getDataRange().getValues();
+  var data = sheet.getDataRange().getDisplayValues();
   if (data.length <= 1) {
     return jsonResponse({ status: 'success', bookings: [], busySlots: [] });
   }
@@ -352,8 +372,8 @@ function doGet(e) {
     var bookings = [];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
-      var rDate = formatDateValue(row[colMap.date]);
-      var rTime = formatTimeValue(row[colMap.time]);
+      var rDate = cleanStr(row[colMap.date]);
+      var rTime = cleanStr(row[colMap.time]);
       var rClient = cleanStr(row[colMap.client]);
       var rPhone = cleanStr(row[colMap.phone]);
 
@@ -371,7 +391,7 @@ function doGet(e) {
         booking_number: cleanStr(row[colMap.token]) || ('AD-' + (1000 + i)),
         boxName: cleanStr(row[colMap.box]) || 'Бокс 1',
         status: cleanStr(row[colMap.status]) || 'pending',
-        createdAt: formatDateValue(row[colMap.createdAt])
+        createdAt: cleanStr(row[colMap.createdAt])
       });
     }
     return jsonResponse({ status: 'success', bookings: bookings });
@@ -382,9 +402,9 @@ function doGet(e) {
   var dateBookings = [];
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
-    var rDate = formatDateValue(row[colMap.date]);
-    if (rDate === dateParam) {
-      var rTime = formatTimeValue(row[colMap.time]);
+    var rDate = cleanStr(row[colMap.date]);
+    if (rDate === dateParam || rDate.indexOf(dateParam) !== -1) {
+      var rTime = cleanStr(row[colMap.time]);
       var rStatus = cleanStr(row[colMap.status]).toLowerCase();
       if (rStatus !== 'cancelled' && rStatus !== 'отменено') {
         busySlots.push(rTime);
@@ -428,17 +448,19 @@ function doPost(e) {
 
   // Создание новой записи
   var sheet = getBookingsSheet(ss);
-  var data = sheet.getDataRange().getValues();
+  var data = sheet.getDataRange().getDisplayValues();
   var colMap = getColumnMap(data[0]);
 
-  // Телефон оборачиваем в текстовый апостроф, чтобы не было ошибки формулы #ERROR!
-  var rawPhone = String(body.clientPhone || '').trim();
-  var safePhone = rawPhone;
-  if (rawPhone && (rawPhone.charAt(0) === '+' || rawPhone.charAt(0) === '=')) {
-    safePhone = "'" + rawPhone;
-  }
+  // Записываем дату, время и телефон с текстовым апострофом, чтобы Google Sheets не форматировал их как даты/формулы
+  var rawDate = String(body.date || '').trim();
+  var safeDate = rawDate ? (rawDate.charAt(0) === "'" ? rawDate : "'" + rawDate) : '';
 
-  // Формируем строку в соответствии с порядком колонок в таблице
+  var rawTime = String(body.timeSlot || '').trim();
+  var safeTime = rawTime ? (rawTime.charAt(0) === "'" ? rawTime : "'" + rawTime) : '';
+
+  var rawPhone = String(body.clientPhone || '').trim();
+  var safePhone = rawPhone ? (rawPhone.charAt(0) === "'" ? rawPhone : "'" + rawPhone) : '';
+
   var maxCol = 1;
   for (var k in colMap) {
     if (colMap[k] > maxCol) maxCol = colMap[k];
@@ -446,8 +468,8 @@ function doPost(e) {
   var newRow = new Array(maxCol);
   for (var j = 0; j < maxCol; j++) newRow[j] = '';
 
-  newRow[colMap.date] = body.date || '';
-  newRow[colMap.time] = body.timeSlot || '';
+  newRow[colMap.date] = safeDate;
+  newRow[colMap.time] = safeTime;
   newRow[colMap.client] = body.clientName || '';
   newRow[colMap.phone] = safePhone;
   newRow[colMap.car] = body.carModel || '';
@@ -456,7 +478,7 @@ function doPost(e) {
   newRow[colMap.token] = body.booking_number || body.cancellation_token || '';
   newRow[colMap.box] = body.boxName || 'Бокс 1';
   newRow[colMap.status] = body.status || 'pending';
-  newRow[colMap.createdAt] = new Date();
+  newRow[colMap.createdAt] = "'" + Utilities.formatDate(new Date(), 'GMT+3', 'yyyy-MM-dd HH:mm');
 
   sheet.appendRow(newRow);
 
