@@ -72,7 +72,16 @@ const getInitialConfig = (): SiteConfig => {
     const parsed = JSON.parse(raw);
     const validation = SiteConfigSchema.safeParse(parsed);
     if (validation.success) {
-      return validation.data;
+      const data = validation.data;
+      if (
+        data.integrations?.googleSheetsUrl?.includes('AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg')
+      ) {
+        data.integrations.googleSheetsUrl = defaultSiteConfig.integrations.googleSheetsUrl;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch {}
+      }
+      return data;
     }
     console.warn('Stored config was invalid, falling back to default:', validation.error);
     return defaultSiteConfig;

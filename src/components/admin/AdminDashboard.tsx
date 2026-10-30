@@ -435,9 +435,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const [isSyncingConfig, setIsSyncingConfig] = useState(false);
   const [isCopiedScript, setIsCopiedScript] = useState(false);
 
-  const [googleSheetsUrlInput, setGoogleSheetsUrlInput] = useState<string>(
-    (siteConfig as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL
-  );
+  const [googleSheetsUrlInput, setGoogleSheetsUrlInput] = useState<string>(() => {
+    const raw = (siteConfig as any).integrations?.googleSheetsUrl;
+    if (!raw || raw.includes('AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg')) {
+      return DEFAULT_GOOGLE_SHEETS_URL;
+    }
+    return raw;
+  });
   const [isTestingSheets, setIsTestingSheets] = useState(false);
   const [sheetsTestResult, setSheetsTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [sheetsSyncStatus, setSheetsSyncStatus] = useState<{
@@ -590,7 +594,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
       }
 
       return {
-        id: b.booking_number || b.id,
+        id: b.id || b.booking_number,
         box_name: b.boxName || 'Бокс 1',
         box_id: b.boxName?.toLowerCase().includes('2') ? 'box-2' : b.boxName?.toLowerCase().includes('3') ? 'box-3' : 'box-1',
         client_name: b.clientName,
@@ -635,9 +639,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().slice(0, 10);
 
-    const remoteHistory: HistoricalBooking[] = remoteBookings.map((rb) => ({
+    const remoteHistory: HistoricalBooking[] = remoteBookings.map((rb, idx) => ({
       id: rb.id,
-      token: rb.booking_number || rb.id,
+      token: rb.booking_number && rb.booking_number.length > 3 ? rb.booking_number : `AD-${1000 + idx}`,
       dateStr: rb.date || todayStr,
       dayLabel: rb.date === todayStr ? 'Сегодня' : rb.date === tomorrowStr ? 'Завтра' : (rb.date || 'Сегодня'),
       time: rb.timeSlot,
@@ -676,11 +680,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
       }
     } catch (e) {}
 
-    const seenTokens = new Set<string>();
+    const seenIds = new Set<string>();
     const result: HistoricalBooking[] = [];
     for (const item of [...remoteHistory, ...localBookings, ...INITIAL_HISTORY]) {
-      if (!seenTokens.has(item.token)) {
-        seenTokens.add(item.token);
+      if (!seenIds.has(item.id)) {
+        seenIds.add(item.id);
         result.push(item);
       }
     }

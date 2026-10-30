@@ -67,10 +67,10 @@ export const SiteConfigSchema = z.object({
   ),
   integrations: z
     .object({
-      googleSheetsUrl: z.string().default('https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec'),
+      googleSheetsUrl: z.string().default('https://script.google.com/macros/s/AKfycbxKubYJw5gT9DDk90lBmr0VpPYxQT3Mc9o-xwH44zzqK0i9ubZNiqioydUWEK_LSjLSZA/exec'),
     })
     .default({
-      googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec',
+      googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbxKubYJw5gT9DDk90lBmr0VpPYxQT3Mc9o-xwH44zzqK0i9ubZNiqioydUWEK_LSjLSZA/exec',
     }),
   adminAuth: z
     .object({
@@ -214,7 +214,7 @@ export const defaultSiteConfig: SiteConfig = {
     },
   ],
   integrations: {
-    googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec',
+    googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbxKubYJw5gT9DDk90lBmr0VpPYxQT3Mc9o-xwH44zzqK0i9ubZNiqioydUWEK_LSjLSZA/exec',
   },
   adminAuth: {
     login: 'admin',

@@ -1,5 +1,5 @@
 export const DEFAULT_GOOGLE_SHEETS_URL =
-  'https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec';
+  'https://script.google.com/macros/s/AKfycbxKubYJw5gT9DDk90lBmr0VpPYxQT3Mc9o-xwH44zzqK0i9ubZNiqioydUWEK_LSjLSZA/exec';
 
 export interface GoogleSheetsBookingPayload {
   date: string; // YYYY-MM-DD
@@ -104,6 +104,33 @@ export interface FetchBookingsResult {
   isOldDeployment?: boolean;
 }
 
+function normalizeDate(raw: any): string {
+  if (!raw) return '';
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  try {
+    const clean = s.replace(/\s*\(.*\)/, '');
+    const d = new Date(clean);
+    if (!isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+  } catch {}
+  return s;
+}
+
+function normalizeTime(raw: any): string {
+  if (!raw) return '12:00';
+  const s = String(raw).trim();
+  const timeMatch = s.match(/(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    return timeMatch[1].padStart(2, '0') + ':' + timeMatch[2];
+  }
+  return '12:00';
+}
+
 /**
  * Fetches all bookings with rich status info (diagnosing old deployments, errors).
  */
@@ -128,8 +155,8 @@ export async function fetchBookingsWithStatus(
 
         return {
           id: b.id || `gs-${idx}`,
-          date: b.date || '',
-          timeSlot: b.timeSlot || '12:00',
+          date: normalizeDate(b.date),
+          timeSlot: normalizeTime(b.timeSlot),
           clientName: b.clientName || 'Клиент с сайта',
           clientPhone: cleanPhone || '+7 (999) 000-00-00',
           carModel: b.carModel || 'Автомобиль',
