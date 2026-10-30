@@ -72,6 +72,15 @@ export const SiteConfigSchema = z.object({
     .default({
       googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec',
     }),
+  adminAuth: z
+    .object({
+      login: z.string().default('admin'),
+      password: z.string().default('admin123'),
+    })
+    .default({
+      login: 'admin',
+      password: 'admin123',
+    }),
 });
 
 export type SiteConfig = z.infer<typeof SiteConfigSchema>;
@@ -206,5 +215,9 @@ export const defaultSiteConfig: SiteConfig = {
   ],
   integrations: {
     googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec',
+  },
+  adminAuth: {
+    login: 'admin',
+    password: 'admin123',
   },
 };

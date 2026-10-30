@@ -26,6 +26,7 @@ import {
   Code,
   CloudArrowUp,
   CloudArrowDown,
+  SignOut,
 } from '@phosphor-icons/react';
 import { Badge } from '../common/Badge';
 import { GlassButton } from '../common/GlassButton';
@@ -394,7 +395,11 @@ const PRESET_HERO_PHOTOS = [
   },
 ];
 
-export const AdminDashboard: React.FC = () => {
+export interface AdminDashboardProps {
+  onLogout?: () => void;
+}
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const { config, resetConfig } = useTenantConfig();
   const navigate = useNavigate();
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
@@ -451,7 +456,22 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     loadBookingsFromGoogle();
+    const timer = setInterval(() => {
+      loadBookingsFromGoogle();
+    }, 20000); // Auto-poll Google Sheets every 20 seconds for cross-device sync
+    return () => clearInterval(timer);
   }, [loadBookingsFromGoogle]);
+
+  // Sync siteConfig from Google Sheets on initial mount
+  useEffect(() => {
+    fetchConfigFromGoogleSheets(googleSheetsUrlInput)
+      .then((remoteConfig) => {
+        if (remoteConfig && typeof remoteConfig === 'object') {
+          updateSiteConfig(remoteConfig);
+        }
+      })
+      .catch(() => {});
+  }, [googleSheetsUrlInput, updateSiteConfig]);
 
   // Base timeline bookings for initial display
   const [localTimelineBookings, setLocalTimelineBookings] = useState<AdminBooking[]>(() => {
@@ -724,11 +744,13 @@ export const AdminDashboard: React.FC = () => {
   // Services list (with sedan, crossover, suv prices)
   const [siteServicesList, setSiteServicesList] = useState(siteConfig.services);
 
-  // Admin credentials state (env with local override)
-  const initialCreds = getAdminCredentials();
-  const [adminLoginInput, setAdminLoginInput] = useState(initialCreds.login);
-  const [adminPasswordInput, setAdminPasswordInput] = useState(initialCreds.password);
-  const [isCredsCustom, setIsCredsCustom] = useState(initialCreds.isCustom);
+  // Admin credentials state (env with local override or synced config)
+  const initialCreds = (siteConfig as any).adminAuth || getAdminCredentials();
+  const [adminLoginInput, setAdminLoginInput] = useState(initialCreds.login || 'admin');
+  const [adminPasswordInput, setAdminPasswordInput] = useState(initialCreds.password || 'admin123');
+  const [isCredsCustom, setIsCredsCustom] = useState(
+    Boolean((siteConfig as any).adminAuth?.password) || initialCreds.isCustom
+  );
 
   const handleTestSheets = async () => {
     setIsTestingSheets(true);
@@ -1054,7 +1076,19 @@ export const AdminDashboard: React.FC = () => {
     }
     saveAdminCredentials(adminLoginInput, adminPasswordInput);
     setIsCredsCustom(true);
-    showToast('Логин и пароль администратора успешно сохранены!');
+
+    const updatedConfig = {
+      ...siteConfig,
+      adminAuth: {
+        login: adminLoginInput.trim(),
+        password: adminPasswordInput.trim(),
+      },
+    };
+    updateSiteConfig(updatedConfig);
+    saveConfigToGoogleSheets(updatedConfig, googleSheetsUrlInput).catch((err) =>
+      console.warn('Could not sync adminAuth to sheets:', err)
+    );
+    showToast('Логин и пароль успешно сохранены и синхронизированы!');
   };
 
   const handleResetCredentials = () => {
@@ -1062,7 +1096,17 @@ export const AdminDashboard: React.FC = () => {
     setAdminLoginInput(envCreds.login);
     setAdminPasswordInput(envCreds.password);
     setIsCredsCustom(false);
-    showToast('Пароль сброшен к значениям по умолчанию');
+
+    const updatedConfig = {
+      ...siteConfig,
+      adminAuth: {
+        login: envCreds.login,
+        password: envCreds.password,
+      },
+    };
+    updateSiteConfig(updatedConfig);
+    saveConfigToGoogleSheets(updatedConfig, googleSheetsUrlInput).catch(() => {});
+    showToast('Пароль сброшен к значениям по умолчанию и синхронизирован');
   };
 
   const handleResetToDefaults = () => {
@@ -1187,6 +1231,17 @@ export const AdminDashboard: React.FC = () => {
                 <span>Настройки</span>
               </button>
             </div>
+
+            {props.onLogout && (
+              <button
+                onClick={props.onLogout}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-xs font-semibold text-red-400 hover:text-red-300 transition-all"
+                title="Выйти из аккаунта администратора"
+              >
+                <SignOut size={15} />
+                <span className="hidden sm:inline">Выйти</span>
+              </button>
+            )}
           </div>
         </div>
 

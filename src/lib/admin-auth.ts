@@ -50,10 +50,17 @@ export const resetAdminCredentialsToEnv = (): AdminCredentials => {
   return getAdminCredentials();
 };
 
-export const verifyAdminCredentials = (inputLogin: string, inputPassword: string): boolean => {
+export const verifyAdminCredentials = (
+  inputLogin: string,
+  inputPassword: string,
+  configAuth?: { login?: string; password?: string }
+): boolean => {
   const current = getAdminCredentials();
+  const targetLogin = configAuth?.login || current.login;
+  const targetPassword = configAuth?.password || current.password;
+
   return (
-    inputLogin.trim().toLowerCase() === current.login.trim().toLowerCase() &&
-    inputPassword.trim() === current.password.trim()
+    inputLogin.trim().toLowerCase() === targetLogin.trim().toLowerCase() &&
+    inputPassword.trim() === targetPassword.trim()
   );
 };

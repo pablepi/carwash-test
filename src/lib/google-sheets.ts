@@ -34,18 +34,23 @@ export interface RemoteBookingRecord {
 /**
  * Sends a booking record to the user's Google Sheets Apps Script Web App.
  * Uses text/plain to avoid browser CORS preflight blocks with Google Apps Script.
+ * Always formats phone with an apostrophe if it starts with '+' to prevent #ERROR! formula parse error.
  */
 export async function sendBookingToGoogleSheets(
   booking: GoogleSheetsBookingPayload,
   scriptUrl: string = DEFAULT_GOOGLE_SHEETS_URL
 ): Promise<{ success: boolean; message?: string }> {
   const url = scriptUrl?.trim() || DEFAULT_GOOGLE_SHEETS_URL;
+  const rawPhone = (booking.clientPhone || '').trim();
+  // Prefix with apostrophe if it starts with '+' so Google Sheets never parses it as a formula (#ERROR!)
+  const safePhone = rawPhone.startsWith('+') ? `'${rawPhone}` : rawPhone;
+
   const payload = {
     action: 'createBooking',
     date: booking.date,
     timeSlot: booking.timeSlot,
     clientName: booking.clientName,
-    clientPhone: booking.clientPhone,
+    clientPhone: safePhone,
     carModel: booking.carModel || '',
     serviceTitle: booking.serviceTitle || '',
     totalPrice: booking.totalPrice || 0,
@@ -108,20 +113,44 @@ export async function fetchAllBookingsFromGoogleSheets(
     const data = await res.json();
 
     if (data.status === 'success' && Array.isArray(data.bookings)) {
-      return data.bookings.map((b: any, idx: number) => ({
-        id: b.id || `gs-${idx}`,
-        date: b.date || '',
-        timeSlot: b.timeSlot || '12:00',
-        clientName: b.clientName || 'Клиент с сайта',
-        clientPhone: b.clientPhone || '+7 (999) 000-00-00',
-        carModel: b.carModel || 'Автомобиль',
-        serviceTitle: b.serviceTitle || 'Услуга',
-        totalPrice: Number(b.totalPrice) || 0,
-        booking_number: b.booking_number || `AD-${1000 + idx}`,
-        boxName: b.boxName || 'Бокс 1',
-        status: (b.status === 'cancelled' ? 'cancelled' : b.status === 'completed' ? 'completed' : b.status === 'in_progress' ? 'in_progress' : 'pending') as any,
-        createdAt: b.createdAt || '',
-      }));
+      return data.bookings.map((b: any, idx: number) => {
+        let cleanPhone = String(b.clientPhone || '').trim();
+        if (cleanPhone.startsWith("'")) cleanPhone = cleanPhone.slice(1);
+        if (cleanPhone.includes('#ERROR!')) cleanPhone = '';
+
+        return {
+          id: b.id || `gs-${idx}`,
+          date: b.date || '',
+          timeSlot: b.timeSlot || '12:00',
+          clientName: b.clientName || 'Клиент с сайта',
+          clientPhone: cleanPhone || '+7 (999) 000-00-00',
+          carModel: b.carModel || 'Автомобиль',
+          serviceTitle: b.serviceTitle || 'Услуга',
+          totalPrice: Number(b.totalPrice) || 0,
+          booking_number: b.booking_number || `AD-${1000 + idx}`,
+          boxName: b.boxName || 'Бокс 1',
+          status: (b.status === 'cancelled'
+            ? 'cancelled'
+            : b.status === 'completed'
+            ? 'completed'
+            : b.status === 'in_progress'
+            ? 'in_progress'
+            : 'pending') as any,
+          createdAt: b.createdAt || '',
+        };
+      });
+    }
+
+    // Fallback: If script only supports ?date=, try fetching for today
+    if (data.status === 'error' && data.message?.includes('date')) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const dateRes = await fetch(`${url}?date=${encodeURIComponent(todayStr)}`);
+      if (dateRes.ok) {
+        const dateData = await dateRes.json();
+        if (dateData.status === 'success' && Array.isArray(dateData.bookings)) {
+          return dateData.bookings;
+        }
+      }
     }
 
     return [];
@@ -230,24 +259,20 @@ export async function testGoogleSheetsConnection(
 
 /**
  * Up-to-date Google Apps Script code template that supports:
+ *  - Auto-detection of columns by header names (handles any order!)
+ *  - Safe phone number storage with text apostrophe (completely fixes #ERROR!)
  *  - Real-time booking saving
  *  - GET all bookings for Admin on any device
- *  - Date-based slot checking (handles Date objects and strings accurately)
- *  - Config sync across devices
+ *  - Config and admin password sync across devices
  */
 export const GOOGLE_APPS_SCRIPT_TEMPLATE = `/**
- * GOOGLE APPS SCRIPT ДЛЯ АВТОМОЙКИ И ДЕТЕЙЛИНГА
- * Инструкция:
- * 1. Откройте вашу Google Таблицу
- * 2. В верхнем меню выберите: Расширения (Extensions) -> Apps Script
- * 3. Полностью сотрите всё содержимое и вставьте этот код
- * 4. Нажмите «Развернуть» (Deploy) -> «Новое развертывание» (New deployment)
- * 5. Тип: «Веб-приложение» (Web app)
- * 6. Конфигурация:
- *    - Описание: "Синхронизация автомойки"
- *    - Запуск от имени: "Меня" (Me)
- *    - У кого есть доступ: "Все" (Anyone) — это обязательно!
- * 7. Нажмите «Развернуть», предоставьте доступ аккаунту Google и скопируйте полученную ссылку (exec).
+ * УНИВЕРСАЛЬНЫЙ СКРИПТ ДЛЯ GOOGLE ТАБЛИЦЫ АВТОМОЙКИ (v2.0)
+ * 
+ * Особенности:
+ * 1. Автоматически находит нужные колонки по заголовкам (независимо от порядка!).
+ * 2. Номер телефона записывается как чистый текст (предотвращает #ERROR!).
+ * 3. Отдает все бронирования в админку на любом устройстве.
+ * 4. Синхронизирует настройки и пароль администратора.
  */
 
 function doGet(e) {
@@ -255,7 +280,7 @@ function doGet(e) {
   var dateParam = (e && e.parameter && e.parameter.date) || '';
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 1. Получение настроек сайта (для синхронизации между телефоном и ПК)
+  // 1. Получение настроек сайта
   if (action === 'getConfig') {
     var configSheet = ss.getSheetByName('Настройки');
     if (!configSheet) {
@@ -263,58 +288,78 @@ function doGet(e) {
     }
     var configVal = configSheet.getRange(1, 1).getValue();
     try {
-      var parsed = JSON.parse(configVal);
-      return jsonResponse({ status: 'success', config: parsed });
+      return jsonResponse({ status: 'success', config: JSON.parse(configVal) });
     } catch (err) {
       return jsonResponse({ status: 'error', message: 'Config parsing error' });
     }
   }
 
-  // 2. Получение всех записей для админ-панели на любом устройстве
+  // 2. Получение всех записей для админки (для любых устройств)
+  var sheet = getBookingsSheet(ss);
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) {
+    return jsonResponse({ status: 'success', bookings: [], busySlots: [] });
+  }
+
+  var colMap = getColumnMap(data[0]);
+
   if (action === 'getAllBookings' || action === 'all' || !dateParam) {
-    var sheet = getBookingsSheet(ss);
-    var data = sheet.getDataRange().getValues();
     var bookings = [];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
-      if (!row[0] && !row[1] && !row[2]) continue;
+      var rDate = formatDateValue(row[colMap.date]);
+      var rTime = formatTimeValue(row[colMap.time]);
+      var rClient = cleanStr(row[colMap.client]);
+      var rPhone = cleanStr(row[colMap.phone]);
 
-      var rowDate = formatDateValue(row[0]);
-      var rowTime = formatTimeValue(row[1]);
+      if (!rDate && !rTime && !rClient && !rPhone) continue;
 
       bookings.push({
         id: 'gs-' + i,
-        date: rowDate,
-        timeSlot: rowTime,
-        clientName: String(row[2] || ''),
-        clientPhone: String(row[3] || ''),
-        carModel: String(row[4] || ''),
-        serviceTitle: String(row[5] || ''),
-        totalPrice: Number(row[6]) || 0,
-        booking_number: String(row[7] || ''),
-        boxName: String(row[8] || 'Бокс 1'),
-        status: String(row[9] || 'pending'),
-        createdAt: row[10] ? formatDateValue(row[10]) : ''
+        date: rDate,
+        timeSlot: rTime,
+        clientName: rClient || 'Клиент с сайта',
+        clientPhone: rPhone || '',
+        carModel: cleanStr(row[colMap.car]) || '',
+        serviceTitle: cleanStr(row[colMap.service]) || '',
+        totalPrice: Number(row[colMap.price]) || 0,
+        booking_number: cleanStr(row[colMap.token]) || ('AD-' + (1000 + i)),
+        boxName: cleanStr(row[colMap.box]) || 'Бокс 1',
+        status: cleanStr(row[colMap.status]) || 'pending',
+        createdAt: formatDateValue(row[colMap.createdAt])
       });
     }
     return jsonResponse({ status: 'success', bookings: bookings });
   }
 
-  // 3. Получение занятых слотов на указанную дату
-  var sheet = getBookingsSheet(ss);
-  var data = sheet.getDataRange().getValues();
+  // 3. Запрос занятых слотов по дате
   var busySlots = [];
+  var dateBookings = [];
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
-    var rowDate = formatDateValue(row[0]);
-    if (rowDate === dateParam) {
-      var rowStatus = String(row[9] || '').toLowerCase();
-      if (rowStatus !== 'cancelled' && rowStatus !== 'отменено') {
-        busySlots.push(formatTimeValue(row[1]));
+    var rDate = formatDateValue(row[colMap.date]);
+    if (rDate === dateParam) {
+      var rTime = formatTimeValue(row[colMap.time]);
+      var rStatus = cleanStr(row[colMap.status]).toLowerCase();
+      if (rStatus !== 'cancelled' && rStatus !== 'отменено') {
+        busySlots.push(rTime);
+        dateBookings.push({
+          id: 'gs-' + i,
+          date: rDate,
+          timeSlot: rTime,
+          clientName: cleanStr(row[colMap.client]),
+          clientPhone: cleanStr(row[colMap.phone]),
+          carModel: cleanStr(row[colMap.car]),
+          serviceTitle: cleanStr(row[colMap.service]),
+          totalPrice: Number(row[colMap.price]) || 0,
+          booking_number: cleanStr(row[colMap.token]) || ('AD-' + (1000 + i)),
+          boxName: cleanStr(row[colMap.box]) || 'Бокс 1',
+          status: cleanStr(row[colMap.status]) || 'pending'
+        });
       }
     }
   }
-  return jsonResponse({ status: 'success', date: dateParam, busySlots: busySlots });
+  return jsonResponse({ status: 'success', date: dateParam, busySlots: busySlots, bookings: dateBookings });
 }
 
 function doPost(e) {
@@ -326,7 +371,7 @@ function doPost(e) {
     return jsonResponse({ status: 'error', message: 'Invalid JSON payload' });
   }
 
-  // Сохранение настроек сайта
+  // Сохранение конфигурации сайта
   if (body.action === 'saveConfig') {
     var configSheet = ss.getSheetByName('Настройки');
     if (!configSheet) {
@@ -336,36 +381,39 @@ function doPost(e) {
     return jsonResponse({ status: 'success', message: 'Настройки успешно синхронизированы' });
   }
 
-  // Обновление статуса записи
-  if (body.action === 'updateStatus' && (body.booking_number || body.id)) {
-    var sheet = getBookingsSheet(ss);
-    var data = sheet.getDataRange().getValues();
-    for (var i = 1; i < data.length; i++) {
-      var num = String(data[i][7] || '');
-      var rowId = 'gs-' + i;
-      if (num === body.booking_number || rowId === body.id) {
-        sheet.getRange(i + 1, 10).setValue(body.status);
-        return jsonResponse({ status: 'success', message: 'Статус обновлен' });
-      }
-    }
-    return jsonResponse({ status: 'not_found', message: 'Запись не найдена' });
-  }
-
   // Создание новой записи
   var sheet = getBookingsSheet(ss);
-  sheet.appendRow([
-    body.date || '',
-    body.timeSlot || '',
-    body.clientName || '',
-    body.clientPhone || '',
-    body.carModel || '',
-    body.serviceTitle || '',
-    body.totalPrice || 0,
-    body.booking_number || body.cancellation_token || '',
-    body.boxName || 'Бокс 1',
-    body.status || 'pending',
-    new Date()
-  ]);
+  var data = sheet.getDataRange().getValues();
+  var colMap = getColumnMap(data[0]);
+
+  // Телефон оборачиваем в текстовый апостроф, чтобы не было ошибки формулы #ERROR!
+  var rawPhone = String(body.clientPhone || '').trim();
+  var safePhone = rawPhone;
+  if (rawPhone && (rawPhone.charAt(0) === '+' || rawPhone.charAt(0) === '=')) {
+    safePhone = "'" + rawPhone;
+  }
+
+  // Формируем строку в соответствии с порядком колонок в таблице
+  var maxCol = 1;
+  for (var k in colMap) {
+    if (colMap[k] > maxCol) maxCol = colMap[k];
+  }
+  var newRow = new Array(maxCol);
+  for (var j = 0; j < maxCol; j++) newRow[j] = '';
+
+  newRow[colMap.date] = body.date || '';
+  newRow[colMap.time] = body.timeSlot || '';
+  newRow[colMap.client] = body.clientName || '';
+  newRow[colMap.phone] = safePhone;
+  newRow[colMap.car] = body.carModel || '';
+  newRow[colMap.service] = body.serviceTitle || '';
+  newRow[colMap.price] = body.totalPrice || 0;
+  newRow[colMap.token] = body.booking_number || body.cancellation_token || '';
+  newRow[colMap.box] = body.boxName || 'Бокс 1';
+  newRow[colMap.status] = body.status || 'pending';
+  newRow[colMap.createdAt] = new Date();
+
+  sheet.appendRow(newRow);
 
   return jsonResponse({ status: 'success', message: 'Бронирование успешно создано' });
 }
@@ -389,6 +437,47 @@ function getBookingsSheet(ss) {
     sheet.getRange(1, 1, 1, 11).setFontWeight('bold');
   }
   return sheet;
+}
+
+function getColumnMap(headers) {
+  var map = {
+    date: 0,
+    time: 1,
+    client: 2,
+    phone: 3,
+    car: 4,
+    service: 5,
+    price: 6,
+    token: 7,
+    box: 8,
+    status: 9,
+    createdAt: 10
+  };
+  if (!headers || !headers.length) return map;
+
+  for (var i = 0; i < headers.length; i++) {
+    var h = String(headers[i] || '').toLowerCase().trim();
+    if (h.indexOf('дат') !== -1 || h === 'date') map.date = i;
+    else if (h.indexOf('врем') !== -1 || h === 'time' || h.indexOf('слот') !== -1) map.time = i;
+    else if (h.indexOf('клиент') !== -1 || h.indexOf('имя') !== -1 || h === 'name' || h.indexOf('нта') !== -1) map.client = i;
+    else if (h.indexOf('телеф') !== -1 || h === 'phone' || h.indexOf('тел') !== -1) map.phone = i;
+    else if (h.indexOf('авто') !== -1 || h.indexOf('машин') !== -1 || h === 'car') map.car = i;
+    else if (h.indexOf('услуг') !== -1 || h === 'service') map.service = i;
+    else if (h.indexOf('стоим') !== -1 || h.indexOf('цен') !== -1 || h === 'price') map.price = i;
+    else if (h.indexOf('брон') !== -1 || h.indexOf('номер') !== -1 || h === 'token' || h === 'id') map.token = i;
+    else if (h.indexOf('бокс') !== -1 || h === 'box') map.box = i;
+    else if (h.indexOf('статус') !== -1 || h === 'status') map.status = i;
+    else if (h.indexOf('создан') !== -1 || h === 'created') map.createdAt = i;
+  }
+  return map;
+}
+
+function cleanStr(val) {
+  if (val === undefined || val === null) return '';
+  var s = String(val).trim();
+  if (s.indexOf('#ERROR!') !== -1) return '';
+  if (s.charAt(0) === "'") return s.slice(1);
+  return s;
 }
 
 function formatDateValue(val) {

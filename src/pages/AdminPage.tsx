@@ -4,9 +4,14 @@ import { GlassButton } from '@/components/common/GlassButton';
 import { Badge } from '@/components/common/Badge';
 import { ShieldCheck, Lock, User, Warning } from '@phosphor-icons/react';
 import { verifyAdminCredentials } from '@/lib/admin-auth';
+import { useSiteConfig } from '@/context/SiteConfigContext';
 
 export const AdminPage: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { config } = useSiteConfig();
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('apex_admin_logged_in') === 'true';
+  });
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -15,12 +20,22 @@ export const AdminPage: React.FC = () => {
     e.preventDefault();
     setErrorMsg(null);
 
-    const isValid = verifyAdminCredentials(login, password);
+    const isValid = verifyAdminCredentials(login, password, (config as any).adminAuth);
     if (isValid) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('apex_admin_logged_in', 'true');
+      }
       setIsAuthenticated(true);
     } else {
       setErrorMsg('Неверный логин или пароль. Проверьте введенные данные.');
     }
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('apex_admin_logged_in');
+    }
+    setIsAuthenticated(false);
   };
 
   if (!isAuthenticated) {
@@ -91,7 +106,7 @@ export const AdminPage: React.FC = () => {
 
           <div className="mt-5 pt-4 border-t border-white/[0.08] text-center">
             <span className="text-[11px] text-[#6E6E73]">
-              Данные для входа по умолчанию: <code className="text-[#A1A1A6]">admin</code> / <code className="text-[#A1A1A6]">admin123</code>
+              Данные для входа: <code className="text-[#A1A1A6]">admin</code> / <code className="text-[#A1A1A6]">admin123</code>
             </span>
           </div>
         </div>
@@ -99,5 +114,5 @@ export const AdminPage: React.FC = () => {
     );
   }
 
-  return <AdminDashboard />;
+  return <AdminDashboard onLogout={handleLogout} />;
 };
