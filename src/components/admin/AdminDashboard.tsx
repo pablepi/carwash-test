@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   ShieldCheck,
   Plus,
@@ -22,6 +22,10 @@ import {
   MapPin,
   Key,
   Database,
+  ArrowsClockwise,
+  Code,
+  CloudArrowUp,
+  CloudArrowDown,
 } from '@phosphor-icons/react';
 import { Badge } from '../common/Badge';
 import { GlassButton } from '../common/GlassButton';
@@ -36,7 +40,14 @@ import {
 import {
   DEFAULT_GOOGLE_SHEETS_URL,
   testGoogleSheetsConnection,
+  fetchAllBookingsFromGoogleSheets,
+  sendBookingToGoogleSheets,
+  saveConfigToGoogleSheets,
+  fetchConfigFromGoogleSheets,
+  GOOGLE_APPS_SCRIPT_TEMPLATE,
+  RemoteBookingRecord,
 } from '@/lib/google-sheets';
+import { slugify } from '@/lib/slugify';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export interface AdminBooking {
@@ -66,7 +77,7 @@ interface HistoricalBooking {
   serviceTitle: string;
   price: number;
   box: string;
-  status: 'completed' | 'in_progress' | 'pending' | 'cancelled';
+  status: 'completed' | 'in_progress' | 'pending' | 'cancelled' | 'done';
 }
 
 // Curated 7-day realistic studio history
@@ -386,7 +397,17 @@ const PRESET_HERO_PHOTOS = [
 export const AdminDashboard: React.FC = () => {
   const { config, resetConfig } = useTenantConfig();
   const navigate = useNavigate();
-  const { tenantSlug = 'apex-detailing' } = useParams<{ tenantSlug: string }>();
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
+
+  // Single Source of Truth via SiteConfigContext
+  const {
+    config: siteConfig,
+    updateConfig: updateSiteConfig,
+    resetConfig: resetSiteConfig,
+  } = useSiteConfig();
+
+  // Dynamic car wash slug derived from Admin settings
+  const currentSlug = tenantSlug && tenantSlug !== 'apex-detailing' ? tenantSlug : slugify(siteConfig.branding.name || 'carwash');
 
   // Current main tab: timeline | history | settings
   const [activeTab, setActiveTab] = useState<'timeline' | 'history' | 'settings'>('timeline');
@@ -402,8 +423,38 @@ export const AdminDashboard: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Timeline active bookings
-  const [bookings, setBookings] = useState<AdminBooking[]>(() => {
+  // Google Sheets remote bookings & sync state
+  const [remoteBookings, setRemoteBookings] = useState<RemoteBookingRecord[]>([]);
+  const [isLoadingRemote, setIsLoadingRemote] = useState(false);
+  const [isSyncingConfig, setIsSyncingConfig] = useState(false);
+  const [isCopiedScript, setIsCopiedScript] = useState(false);
+
+  const [googleSheetsUrlInput, setGoogleSheetsUrlInput] = useState<string>(
+    (siteConfig as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL
+  );
+  const [isTestingSheets, setIsTestingSheets] = useState(false);
+  const [sheetsTestResult, setSheetsTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const loadBookingsFromGoogle = useCallback(async () => {
+    setIsLoadingRemote(true);
+    try {
+      const list = await fetchAllBookingsFromGoogleSheets(googleSheetsUrlInput);
+      if (list && list.length > 0) {
+        setRemoteBookings(list);
+      }
+    } catch (e) {
+      console.warn('Failed to load remote bookings:', e);
+    } finally {
+      setIsLoadingRemote(false);
+    }
+  }, [googleSheetsUrlInput]);
+
+  useEffect(() => {
+    loadBookingsFromGoogle();
+  }, [loadBookingsFromGoogle]);
+
+  // Base timeline bookings for initial display
+  const [localTimelineBookings, setLocalTimelineBookings] = useState<AdminBooking[]>(() => {
     const baseBookings: AdminBooking[] = [
       {
         id: 'b-101',
@@ -444,32 +495,6 @@ export const AdminDashboard: React.FC = () => {
         status: 'pending',
         date: 'Сегодня',
       },
-      {
-        id: 'b-104',
-        box_name: 'Бокс 1',
-        box_id: 'box-1',
-        client_name: 'Илья Кузнецов',
-        client_phone: '+7 (905) 111-22-33',
-        car_model: 'Mercedes-Benz E53 [Р 123 РР 77]',
-        service_title: 'Экспресс-мойка кузова',
-        start_time: '10:00',
-        end_time: '10:45',
-        status: 'completed',
-        date: 'Сегодня',
-      },
-      {
-        id: 'b-105',
-        box_name: 'Бокс 2',
-        box_id: 'box-2',
-        client_name: 'Роман Белов',
-        client_phone: '+7 (999) 444-55-66',
-        car_model: 'Geely Monjaro [С 555 СС 777]',
-        service_title: 'Химчистка сидений',
-        start_time: '11:00',
-        end_time: '12:30',
-        status: 'pending',
-        date: 'Завтра',
-      },
     ];
 
     try {
@@ -508,6 +533,55 @@ export const AdminDashboard: React.FC = () => {
     return baseBookings;
   });
 
+  // Mapped remote bookings from Google Sheets into AdminBooking format
+  const mappedRemoteAdminBookings = useMemo((): AdminBooking[] => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+    return remoteBookings.map((b) => {
+      const [h, m] = (b.timeSlot || '12:00').split(':').map(Number);
+      const endTotalMins = (h || 12) * 60 + (m || 0) + 60;
+      const endH = Math.floor(endTotalMins / 60) % 24;
+      const endM = endTotalMins % 60;
+      const endStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
+
+      let dayLabel = 'Сегодня';
+      if (b.date === todayStr) {
+        dayLabel = 'Сегодня';
+      } else if (b.date === tomorrowStr) {
+        dayLabel = 'Завтра';
+      } else if (b.date) {
+        dayLabel = b.date;
+      }
+
+      return {
+        id: b.booking_number || b.id,
+        box_name: b.boxName || 'Бокс 1',
+        box_id: b.boxName?.toLowerCase().includes('2') ? 'box-2' : b.boxName?.toLowerCase().includes('3') ? 'box-3' : 'box-1',
+        client_name: b.clientName,
+        client_phone: b.clientPhone,
+        car_model: b.carModel,
+        service_title: b.serviceTitle,
+        start_time: b.timeSlot,
+        end_time: endStr,
+        status: b.status,
+        date: dayLabel,
+      };
+    });
+  }, [remoteBookings]);
+
+  // Combined bookings for Timeline
+  const bookings = useMemo((): AdminBooking[] => {
+    if (mappedRemoteAdminBookings.length > 0) {
+      const remoteIds = new Set(mappedRemoteAdminBookings.map((r) => r.id));
+      const localFiltered = localTimelineBookings.filter((b) => !remoteIds.has(b.id));
+      return [...mappedRemoteAdminBookings, ...localFiltered];
+    }
+    return localTimelineBookings;
+  }, [mappedRemoteAdminBookings, localTimelineBookings]);
+
   // New booking form state for manual add
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('+7 (');
@@ -521,8 +595,29 @@ export const AdminDashboard: React.FC = () => {
   const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'completed' | 'in_progress' | 'cancelled'>('all');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
-  // Combine static history with any user-created bookings stored in localStorage
+  // Combine Google Sheets remote bookings, user-created bookings, and baseline history
   const allHistoryRecords = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+    const remoteHistory: HistoricalBooking[] = remoteBookings.map((rb) => ({
+      id: rb.id,
+      token: rb.booking_number || rb.id,
+      dateStr: rb.date || todayStr,
+      dayLabel: rb.date === todayStr ? 'Сегодня' : rb.date === tomorrowStr ? 'Завтра' : (rb.date || 'Сегодня'),
+      time: rb.timeSlot,
+      clientName: rb.clientName,
+      phone: rb.clientPhone,
+      carModel: rb.carModel,
+      plate: rb.carModel?.includes('[') ? (rb.carModel.match(/\[(.*?)\]/) || ['', ''])[1] : '',
+      serviceTitle: rb.serviceTitle,
+      price: rb.totalPrice,
+      box: rb.boxName,
+      status: rb.status,
+    }));
+
     let localBookings: HistoricalBooking[] = [];
     try {
       const raw = localStorage.getItem('apex_bookings_history');
@@ -548,8 +643,16 @@ export const AdminDashboard: React.FC = () => {
       }
     } catch (e) {}
 
-    return [...localBookings, ...INITIAL_HISTORY];
-  }, []);
+    const seenTokens = new Set<string>();
+    const result: HistoricalBooking[] = [];
+    for (const item of [...remoteHistory, ...localBookings, ...INITIAL_HISTORY]) {
+      if (!seenTokens.has(item.token)) {
+        seenTokens.add(item.token);
+        result.push(item);
+      }
+    }
+    return result;
+  }, [remoteBookings]);
 
   // Filtered history records
   const filteredHistory = useMemo(() => {
@@ -589,12 +692,7 @@ export const AdminDashboard: React.FC = () => {
     };
   }, [allHistoryRecords]);
 
-  // Single Source of Truth via SiteConfigContext
-  const {
-    config: siteConfig,
-    updateConfig: updateSiteConfig,
-    resetConfig: resetSiteConfig,
-  } = useSiteConfig();
+// Single Source of Truth already initialized at top
 
   // Branding states
   const [brandingName, setBrandingName] = useState(siteConfig.branding.name);
@@ -632,13 +730,6 @@ export const AdminDashboard: React.FC = () => {
   const [adminPasswordInput, setAdminPasswordInput] = useState(initialCreds.password);
   const [isCredsCustom, setIsCredsCustom] = useState(initialCreds.isCustom);
 
-  // Google Sheets integration state
-  const [googleSheetsUrlInput, setGoogleSheetsUrlInput] = useState<string>(
-    (siteConfig as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL
-  );
-  const [isTestingSheets, setIsTestingSheets] = useState(false);
-  const [sheetsTestResult, setSheetsTestResult] = useState<{ ok: boolean; message: string } | null>(null);
-
   const handleTestSheets = async () => {
     setIsTestingSheets(true);
     setSheetsTestResult(null);
@@ -647,6 +738,7 @@ export const AdminDashboard: React.FC = () => {
       setSheetsTestResult(res);
       if (res.ok) {
         showToast('Связь с Google Таблицей подтверждена!');
+        loadBookingsFromGoogle();
       } else {
         showToast('Не удалось связаться с Google Таблицей');
       }
@@ -664,6 +756,46 @@ export const AdminDashboard: React.FC = () => {
       },
     });
     showToast('Ссылка на Google Таблицу успешно сохранена');
+    loadBookingsFromGoogle();
+  };
+
+  const handleSyncConfigToSheets = async () => {
+    setIsSyncingConfig(true);
+    try {
+      const res = await saveConfigToGoogleSheets(siteConfig, googleSheetsUrlInput);
+      if (res.success) {
+        showToast('Настройки сайта успешно сохранены в Google Таблицу!');
+      } else {
+        showToast(res.message || 'Ошибка сохранения настроек');
+      }
+    } catch (e: any) {
+      showToast('Ошибка сохранения настроек');
+    } finally {
+      setIsSyncingConfig(false);
+    }
+  };
+
+  const handleLoadConfigFromSheets = async () => {
+    setIsSyncingConfig(true);
+    try {
+      const remote = await fetchConfigFromGoogleSheets(googleSheetsUrlInput);
+      if (remote) {
+        updateSiteConfig(remote);
+        if (remote.branding?.name) setBrandingName(remote.branding.name);
+        if (remote.branding?.heroTitle) setHeroTitle(remote.branding.heroTitle);
+        if (remote.theme?.accentColor) {
+          setAccentColorInput(remote.theme.accentColor);
+          setCustomColorText(remote.theme.accentColor);
+        }
+        showToast('Настройки загружены из Google Таблицы!');
+      } else {
+        showToast('Настройки в таблице пока не найдены');
+      }
+    } catch (e: any) {
+      showToast('Ошибка загрузки настроек');
+    } finally {
+      setIsSyncingConfig(false);
+    }
   };
 
   // New service form state
@@ -678,13 +810,16 @@ export const AdminDashboard: React.FC = () => {
 
   // Handle Box Timeline Status & Movement
   const handleStatusChange = (id: string, newStatus: AdminBooking['status']) => {
-    setBookings((prev) =>
+    setLocalTimelineBookings((prev: AdminBooking[]) =>
       prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
+    );
+    setRemoteBookings((prev: RemoteBookingRecord[]) =>
+      prev.map((b) => (b.id === id || b.booking_number === id ? { ...b, status: newStatus } : b))
     );
   };
 
   const handleMoveBooking = (id: string, newBoxName: string, newStartTime: string) => {
-    setBookings((prev) =>
+    setLocalTimelineBookings((prev: AdminBooking[]) =>
       prev.map((b) => {
         if (b.id !== id) return b;
         const [h, m] = newStartTime.split(':').map(Number);
@@ -723,7 +858,30 @@ export const AdminDashboard: React.FC = () => {
       date: 'Сегодня',
     };
 
-    setBookings((prev) => [newBooking, ...prev]);
+    setLocalTimelineBookings((prev) => [newBooking, ...prev]);
+
+    // Send to Google Sheets database asynchronously
+    const todayStr = new Date().toISOString().slice(0, 10);
+    sendBookingToGoogleSheets(
+      {
+        date: todayStr,
+        timeSlot: newTime,
+        clientName: newClientName.trim(),
+        clientPhone: newClientPhone.trim(),
+        carModel: newCarModel.trim(),
+        serviceTitle: newService,
+        totalPrice: 2000,
+        booking_number: `AD-${Math.floor(1000 + Math.random() * 9000)}`,
+        boxName: newBox,
+        status: 'pending',
+      },
+      googleSheetsUrlInput
+    )
+      .then(() => {
+        loadBookingsFromGoogle();
+      })
+      .catch(() => {});
+
     setIsAddModalOpen(false);
     setNewClientName('');
     setNewCarModel('');
@@ -968,10 +1126,23 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2">
             {/* View client website button */}
             <button
-              onClick={() => navigate(`/s/${tenantSlug}`)}
+              onClick={loadBookingsFromGoogle}
+              disabled={isLoadingRemote}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-text-secondary hover:text-white transition-all disabled:opacity-50"
+              title="Обновить записи из Google Таблицы"
+            >
+              <ArrowsClockwise size={15} className={isLoadingRemote ? 'animate-spin text-accent-blue' : ''} />
+              <span className="hidden sm:inline">Таблица:</span>
+              <span className="text-accent-blue font-bold">
+                {remoteBookings.length > 0 ? `${remoteBookings.length} записей` : 'Синхронизировать'}
+              </span>
+            </button>
+
+            <button
+              onClick={() => navigate(`/s/${currentSlug}`)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-text-secondary hover:text-white transition-colors"
             >
-              <span>Сайт студии</span>
+              <span>Сайт (/s/{currentSlug})</span>
               <ArrowSquareOut size={15} />
             </button>
 
@@ -1337,6 +1508,22 @@ export const AdminDashboard: React.FC = () => {
                     placeholder="AquaDrive"
                     className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-accent-blue"
                   />
+                  <div className="mt-2 flex items-center justify-between text-[11px] bg-white/[0.04] px-2.5 py-1.5 rounded-lg border border-white/[0.06]">
+                    <span className="text-[#86868B] truncate">
+                      Адрес сайта:{' '}
+                      <span className="font-mono text-accent-blue font-semibold">
+                        /s/{slugify(brandingName || 'carwash')}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/s/${slugify(brandingName || 'carwash')}`)}
+                      className="text-accent-blue hover:underline inline-flex items-center gap-1 shrink-0 ml-2 font-medium"
+                    >
+                      <span>Открыть</span>
+                      <ArrowSquareOut size={12} />
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -2252,10 +2439,62 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               )}
 
+              {/* Multi-device sync actions */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isSyncingConfig}
+                  onClick={handleSyncConfigToSheets}
+                  className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-xs font-semibold text-white transition-all disabled:opacity-50"
+                >
+                  <CloudArrowUp size={16} className="text-accent-blue" weight="bold" />
+                  <span>{isSyncingConfig ? 'Синхронизация...' : 'Сохранить настройки в таблицу'}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isSyncingConfig}
+                  onClick={handleLoadConfigFromSheets}
+                  className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-xs font-semibold text-white transition-all disabled:opacity-50"
+                >
+                  <CloudArrowDown size={16} className="text-emerald-400" weight="bold" />
+                  <span>Загрузить настройки из таблицы</span>
+                </button>
+              </div>
+
+              {/* Ready script template accordion/modal button */}
+              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Code size={18} className="text-accent-blue" weight="bold" />
+                    <span className="text-xs font-bold text-white">
+                      Код Google Apps Script (для работы со всех устройств)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_TEMPLATE);
+                      setIsCopiedScript(true);
+                      showToast('Код скрипта скопирован в буфер!');
+                      setTimeout(() => setIsCopiedScript(false), 2500);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-blue hover:brightness-110 text-xs font-bold text-white transition-all"
+                  >
+                    {isCopiedScript ? <Check size={14} weight="bold" /> : <Copy size={14} />}
+                    <span>{isCopiedScript ? 'Скопировано!' : 'Скопировать готовый код'}</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-[#86868B] leading-relaxed">
+                  Чтобы база данных отображалась в админке с разных устройств (телефон, планшет, ПК), вставьте этот код в Apps Script вашей таблицы (Расширения → Apps Script) и нажмите «Новое развертывание» (Веб-приложение, доступ: Все).
+                </p>
+              </div>
+
               <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#86868B] border-t border-white/[0.06]">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34C759]" />
-                  Синхронизация активна: данные клиентов попадают в таблицу моментально
+                  <span>
+                    Загружено из Google Таблицы: <strong className="text-white">{remoteBookings.length}</strong> записей
+                  </span>
                 </span>
                 <button
                   type="button"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
-import { apexTenantConfig } from '@tenants/apex-detailing/config';
+import { useTenantConfig } from '@/lib/tenant-store';
+import { slugify } from '@/lib/slugify';
 import { Badge } from '@/components/common/Badge';
 import { GlassButton } from '@/components/common/GlassButton';
 import { FloatingBottomNav } from '@/components/common/FloatingBottomNav';
@@ -17,9 +18,10 @@ import {
 
 export const MyBooking: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { tenantSlug = 'apex-detailing' } = useParams<{ tenantSlug: string }>();
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const navigate = useNavigate();
-  const tenant = apexTenantConfig;
+  const { config: tenant } = useTenantConfig();
+  const currentSlug = tenantSlug || slugify(tenant.name || 'carwash');
 
   const tokenFromUrl = searchParams.get('token');
   const [searchTab, setSearchTab] = useState<'plate' | 'token'>('plate');
@@ -102,7 +104,7 @@ export const MyBooking: React.FC = () => {
       <div className="mx-auto w-full max-w-3xl lg:max-w-4xl px-4 sm:px-6 mb-8 sm:mb-12">
         {/* Back Button (Desktop only, mobile uses bottom navigation bar) */}
         <button
-          onClick={() => navigate(`/s/${tenantSlug}`)}
+          onClick={() => navigate(`/s/${currentSlug}`)}
           className="hidden sm:inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#A1A1A6] hover:text-white transition-colors mb-6"
         >
           <ArrowLeft size={16} /> На главную студии

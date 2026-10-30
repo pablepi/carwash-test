@@ -5,6 +5,11 @@ import {
   defaultSiteConfig,
   CarCategoryId,
 } from '@/config/siteConfig';
+import {
+  DEFAULT_GOOGLE_SHEETS_URL,
+  fetchConfigFromGoogleSheets,
+  saveConfigToGoogleSheets,
+} from '@/lib/google-sheets';
 
 const STORAGE_KEY = 'aquadrive_site_config_v2';
 const CATEGORY_STORAGE_KEY = 'aquadrive_car_category';
@@ -17,6 +22,8 @@ interface SiteConfigContextValue {
   resetConfig: () => void;
   exportConfigAsJson: () => string;
   importConfigFromJson: (jsonStr: string) => { success: boolean; error?: string };
+  syncConfigToSheets: () => Promise<{ success: boolean; message?: string }>;
+  fetchConfigFromSheets: () => Promise<{ success: boolean; message?: string }>;
 }
 
 const SiteConfigContext = createContext<SiteConfigContextValue | undefined>(undefined);
@@ -97,6 +104,29 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     applyThemeToDocument(config.theme, config.meta);
   }, [config.theme, config.meta]);
 
+  // Try to load remote shared config from Google Sheets on initial load
+  useEffect(() => {
+    const sheetsUrl = (config as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL;
+    if (!sheetsUrl) return;
+
+    fetchConfigFromGoogleSheets(sheetsUrl)
+      .then((remoteData) => {
+        if (remoteData) {
+          const validation = SiteConfigSchema.safeParse(remoteData);
+          if (validation.success) {
+            setConfig((prev) => ({
+              ...prev,
+              ...validation.data,
+            }));
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(validation.data));
+            } catch {}
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const setSelectedCarCategory = useCallback((category: CarCategoryId) => {
     setSelectedCarCategoryState(category);
     try {
@@ -174,6 +204,32 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
+  const syncConfigToSheets = useCallback(async (): Promise<{ success: boolean; message?: string }> => {
+    const sheetsUrl = (config as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL;
+    return await saveConfigToGoogleSheets(config, sheetsUrl);
+  }, [config]);
+
+  const fetchConfigFromSheets = useCallback(async (): Promise<{ success: boolean; message?: string }> => {
+    const sheetsUrl = (config as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL;
+    try {
+      const remote = await fetchConfigFromGoogleSheets(sheetsUrl);
+      if (!remote) {
+        return { success: false, message: 'Настройки в Google Таблице пока не найдены' };
+      }
+      const validation = SiteConfigSchema.safeParse(remote);
+      if (!validation.success) {
+        return { success: false, message: 'Неверный формат настроек в таблице' };
+      }
+      setConfig(validation.data);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(validation.data));
+      } catch {}
+      return { success: true, message: 'Настройки успешно загружены из Google Таблицы' };
+    } catch (e: any) {
+      return { success: false, message: e.message || 'Ошибка загрузки настроек' };
+    }
+  }, [config]);
+
   return (
     <SiteConfigContext.Provider
       value={{
@@ -184,6 +240,8 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         resetConfig,
         exportConfigAsJson,
         importConfigFromJson,
+        syncConfigToSheets,
+        fetchConfigFromSheets,
       }}
     >
       {children}

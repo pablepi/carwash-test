@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { useSiteConfig } from '@/context/SiteConfigContext';
 import { TenantConfig } from '@/types/tenant';
 import { SiteConfig, CarCategoryId } from '@/config/siteConfig';
+import { slugify } from '@/lib/slugify';
 
 export interface ExtendedTenantConfig extends TenantConfig {
   accentColor?: string;
@@ -30,7 +31,7 @@ export const siteConfigToTenant = (
   }
 
   return {
-    slug: 'aquadrive',
+    slug: slugify(site.branding.name || 'carwash'),
     name: site.branding.name,
     timezone: 'Europe/Moscow',
     address: site.contacts.address,

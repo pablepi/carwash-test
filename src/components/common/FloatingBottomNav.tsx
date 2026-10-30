@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { House, Sparkle, CalendarCheck } from '@phosphor-icons/react';
+import { useSiteConfig } from '@/context/SiteConfigContext';
+import { slugify } from '@/lib/slugify';
 import { LiquidGlass } from './LiquidGlass';
 
 interface FloatingBottomNavProps {
@@ -47,8 +49,10 @@ export const FloatingBottomNav: React.FC<FloatingBottomNavProps> = ({ onOpenBook
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const { config } = useSiteConfig();
+  const currentSlug = tenantSlug || slugify(config.branding.name || 'carwash');
   const currentPath = location.pathname;
-  const basePath = `/s/${tenantSlug || 'apex-detailing'}`;
+  const basePath = `/s/${currentSlug}`;
 
   // Exactly 3 tabs: Главная, Услуги, Моя запись.
   const navItems = [
