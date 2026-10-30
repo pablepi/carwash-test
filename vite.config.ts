@@ -2,6 +2,7 @@ import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
+import fs from 'fs';
 
 /**
  * Custom raw shader loader plugin to import GLSL shaders seamlessly
@@ -21,10 +22,33 @@ function glslPlugin(): Plugin {
   };
 }
 
+/**
+ * Creates a 404.html copy of index.html in dist for GitHub Pages SPA routing
+ */
+function githubPagesSpaPlugin(): Plugin {
+  return {
+    name: 'vite-plugin-github-pages-spa',
+    closeBundle() {
+      const distDir = path.resolve(__dirname, 'dist');
+      const indexPath = path.join(distDir, 'index.html');
+      const notFoundPath = path.join(distDir, '404.html');
+      try {
+        if (fs.existsSync(indexPath)) {
+          fs.copyFileSync(indexPath, notFoundPath);
+        }
+      } catch (e) {
+        // ignore if not building to dist
+      }
+    },
+  };
+}
+
 export default defineConfig({
+  base: '/carwash-test/',
   plugins: [
     react(),
     glslPlugin(),
+    githubPagesSpaPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -37,7 +61,8 @@ export default defineConfig({
         background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait-primary',
-        start_url: '/',
+        start_url: '/carwash-test/',
+        scope: '/carwash-test/',
         icons: [
           {
             src: '/pwa-192.png',

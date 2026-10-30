@@ -71,7 +71,8 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
 
   // Copy booking direct link
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/s/${tenant.slug}/my-booking?token=${encodeURIComponent(bookingNumber)}`;
+    const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    const url = `${window.location.origin}${basePath}/s/${tenant.slug}/my-booking?token=${encodeURIComponent(bookingNumber)}`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);

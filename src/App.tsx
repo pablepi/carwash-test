@@ -21,7 +21,7 @@ export const App: React.FC = () => {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <SiteConfigProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <Routes>
               {/* Default redirect to reference studio tenant */}
               <Route path="/" element={<Navigate to="/s/apex-detailing" replace />} />
