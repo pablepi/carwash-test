@@ -7,6 +7,7 @@ import { Badge } from '../common/Badge';
 import { useSiteConfig } from '@/context/SiteConfigContext';
 import { CarCategoryId } from '@/config/siteConfig';
 import { TenantConfig } from '@/types/tenant';
+import { sendBookingToGoogleSheets, DEFAULT_GOOGLE_SHEETS_URL } from '@/lib/google-sheets';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -159,6 +160,28 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       } catch (e) {
         console.error('Failed to save booking to localStorage:', e);
       }
+
+      // Send booking directly to Google Sheets database asynchronously
+      const googleSheetsUrl = (config as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL;
+      const dateOnlyStr = startDate ? startDate.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+      const timeOnlyStr = selectedSlotTimeStr || (startDate ? `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}` : '12:00');
+
+      sendBookingToGoogleSheets(
+        {
+          date: dateOnlyStr,
+          timeSlot: timeOnlyStr,
+          clientName: name.trim(),
+          clientPhone: phone,
+          carModel: fullCarModel,
+          serviceTitle: `${activeServiceConfig.name} (${categoryName})`,
+          totalPrice: activePrice,
+          booking_number: token,
+          cancellation_token: token,
+          boxName: 'Бокс 1',
+          status: 'pending',
+        },
+        googleSheetsUrl
+      ).catch((e) => console.warn('Google Sheets background sync:', e));
 
       onSuccess(newBookingData);
     } catch (err: any) {

@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { format, addDays, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { WarningCircle } from '@phosphor-icons/react';
 import { calculateAvailableSlots } from '@/lib/slot-calculator';
+import { fetchBusySlotsFromGoogleSheets } from '@/lib/google-sheets';
 import { TenantConfig } from '@/types/tenant';
 import { ServiceItem } from './ServiceCatalog';
 
@@ -73,6 +74,40 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
   const targetDateStr = format(selectedDate, 'yyyy-MM-dd');
   const serviceDuration = selectedService ? selectedService.durationMinutes : 30;
 
+  const [googleBusySlots, setGoogleBusySlots] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSlots = async () => {
+      try {
+        const slots = await fetchBusySlotsFromGoogleSheets(targetDateStr);
+        if (isMounted) {
+          setGoogleBusySlots(slots);
+        }
+      } catch (err) {
+        // ignore offline errors
+      }
+    };
+    fetchSlots();
+    return () => {
+      isMounted = false;
+    };
+  }, [targetDateStr]);
+
+  const combinedBusyIntervals = useMemo(() => {
+    const remoteIntervals = googleBusySlots.map((timeStr, i) => {
+      const start = new Date(`${targetDateStr}T${timeStr}:00`);
+      const end = new Date(start.getTime() + (serviceDuration + tenant.bufferMinutes) * 60 * 1000);
+      return {
+        boxId: `box-${(i % tenant.boxesCount) + 1}`,
+        startTime: start,
+        bufferedEndTime: end,
+      };
+    });
+
+    return [...mockBusyIntervals, ...remoteIntervals];
+  }, [mockBusyIntervals, googleBusySlots, targetDateStr, serviceDuration, tenant.bufferMinutes, tenant.boxesCount]);
+
   const dayAvailability = useMemo(() => {
     return calculateAvailableSlots({
       targetDate: targetDateStr,
@@ -84,10 +119,10 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
       bufferMinutes: tenant.bufferMinutes,
       workDays: tenant.workDays,
       boxes,
-      busyIntervals: mockBusyIntervals,
+      busyIntervals: combinedBusyIntervals,
       nowUtc: new Date(),
     });
-  }, [targetDateStr, tenant, serviceDuration, boxes, mockBusyIntervals]);
+  }, [targetDateStr, tenant, serviceDuration, boxes, combinedBusyIntervals]);
 
   return (
     <div className={isCompact ? '' : 'mx-auto max-w-5xl px-3 sm:px-6 mb-16 scroll-mt-6'}>

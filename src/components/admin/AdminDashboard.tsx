@@ -21,6 +21,7 @@ import {
   User,
   MapPin,
   Key,
+  Database,
 } from '@phosphor-icons/react';
 import { Badge } from '../common/Badge';
 import { GlassButton } from '../common/GlassButton';
@@ -32,6 +33,10 @@ import {
   saveAdminCredentials,
   resetAdminCredentialsToEnv,
 } from '@/lib/admin-auth';
+import {
+  DEFAULT_GOOGLE_SHEETS_URL,
+  testGoogleSheetsConnection,
+} from '@/lib/google-sheets';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export interface AdminBooking {
@@ -627,6 +632,40 @@ export const AdminDashboard: React.FC = () => {
   const [adminPasswordInput, setAdminPasswordInput] = useState(initialCreds.password);
   const [isCredsCustom, setIsCredsCustom] = useState(initialCreds.isCustom);
 
+  // Google Sheets integration state
+  const [googleSheetsUrlInput, setGoogleSheetsUrlInput] = useState<string>(
+    (siteConfig as any).integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL
+  );
+  const [isTestingSheets, setIsTestingSheets] = useState(false);
+  const [sheetsTestResult, setSheetsTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const handleTestSheets = async () => {
+    setIsTestingSheets(true);
+    setSheetsTestResult(null);
+    try {
+      const res = await testGoogleSheetsConnection(googleSheetsUrlInput);
+      setSheetsTestResult(res);
+      if (res.ok) {
+        showToast('Связь с Google Таблицей подтверждена!');
+      } else {
+        showToast('Не удалось связаться с Google Таблицей');
+      }
+    } catch (e: any) {
+      setSheetsTestResult({ ok: false, message: e.message || 'Ошибка подключения' });
+    } finally {
+      setIsTestingSheets(false);
+    }
+  };
+
+  const handleSaveGoogleSheetsUrl = () => {
+    updateSiteConfig({
+      integrations: {
+        googleSheetsUrl: googleSheetsUrlInput.trim(),
+      },
+    });
+    showToast('Ссылка на Google Таблицу успешно сохранена');
+  };
+
   // New service form state
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
   const [newSvcName, setNewSvcName] = useState('');
@@ -842,6 +881,9 @@ export const AdminDashboard: React.FC = () => {
         accentColor: accentColorInput,
       },
       services: siteServicesList,
+      integrations: {
+        googleSheetsUrl: googleSheetsUrlInput.trim(),
+      },
     });
     showToast('Все настройки и тарифы успешно сохранены');
   };
@@ -2147,6 +2189,83 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
               </form>
+            </div>
+
+            {/* SECTION 8: GOOGLE SHEETS DATABASE */}
+            <div className="astryx-card p-5 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl space-y-4">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Database size={18} className="text-accent-blue" weight="bold" />
+                <h2 className="text-lg sm:text-xl font-bold text-white">
+                  База данных (Google Таблицы)
+                </h2>
+              </div>
+              <p className="text-xs text-[#86868B]">
+                Все бронирования с сайта автоматически сохраняются в вашей онлайн-таблице Google Sheets через Apps Script Web App.
+              </p>
+
+              <div>
+                <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
+                  URL веб-приложения Google Apps Script (exec)
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    value={googleSheetsUrlInput}
+                    onChange={(e) => setGoogleSheetsUrlInput(e.target.value)}
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    className="flex-1 bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-accent-blue"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={isTestingSheets}
+                      onClick={handleTestSheets}
+                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-all disabled:opacity-50"
+                    >
+                      {isTestingSheets ? 'Проверка...' : 'Проверить связь'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveGoogleSheetsUrl}
+                      className="px-4 py-2.5 rounded-xl bg-accent-blue hover:brightness-110 text-xs font-bold text-white transition-all shadow-md"
+                    >
+                      Сохранить
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {sheetsTestResult && (
+                <div
+                  className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                    sheetsTestResult.ok
+                      ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
+                      : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
+                  }`}
+                >
+                  {sheetsTestResult.ok ? (
+                    <Check size={16} weight="bold" className="shrink-0 text-emerald-400" />
+                  ) : (
+                    <X size={16} weight="bold" className="shrink-0 text-rose-400" />
+                  )}
+                  <span>{sheetsTestResult.message}</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#86868B] border-t border-white/[0.06]">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34C759]" />
+                  Синхронизация активна: данные клиентов попадают в таблицу моментально
+                </span>
+                <button
+                  type="button"
+                  onClick={() => window.open(googleSheetsUrlInput, '_blank')}
+                  className="inline-flex items-center gap-1 text-accent-blue hover:underline font-mono"
+                >
+                  <span>Проверить эндпоинт</span>
+                  <ArrowSquareOut size={13} />
+                </button>
+              </div>
             </div>
           </div>
         )}

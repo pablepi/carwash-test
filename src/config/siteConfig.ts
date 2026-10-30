@@ -65,6 +65,13 @@ export const SiteConfigSchema = z.object({
       caption: z.string().optional(),
     })
   ),
+  integrations: z
+    .object({
+      googleSheetsUrl: z.string().default('https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec'),
+    })
+    .default({
+      googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec',
+    }),
 });
 
 export type SiteConfig = z.infer<typeof SiteConfigSchema>;
@@ -197,4 +204,7 @@ export const defaultSiteConfig: SiteConfig = {
       caption: 'Химчистка и кондиционирование салона',
     },
   ],
+  integrations: {
+    googleSheetsUrl: 'https://script.google.com/macros/s/AKfycbx29aSPAPewTU-NIhljGt3yhgC7tl3YYTvAfxv88DgdfQ06_Jubx4h3E9FrzAT00meGAg/exec',
+  },
 };
