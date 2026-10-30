@@ -170,6 +170,12 @@ export async function fetchBookingsWithStatus(
         if (cleanPhone.startsWith("'")) cleanPhone = cleanPhone.slice(1);
         if (cleanPhone.includes('#ERROR!')) cleanPhone = '';
 
+        let rawToken = String(b.booking_number || b.token || b.cancellation_token || '').trim();
+        if (rawToken.toLowerCase().includes('бокс')) {
+          rawToken = '';
+        }
+        const finalBookingNumber = rawToken || `AD-${1000 + idx}`;
+
         return {
           id: b.id || `gs-${idx}`,
           date: normalizeDate(b.date),
@@ -179,7 +185,7 @@ export async function fetchBookingsWithStatus(
           carModel: b.carModel || 'Автомобиль',
           serviceTitle: b.serviceTitle || 'Услуга',
           totalPrice: Number(b.totalPrice) || 0,
-          booking_number: b.booking_number || `AD-${1000 + idx}`,
+          booking_number: finalBookingNumber,
           boxName: b.boxName || 'Бокс 1',
           status: (b.status === 'cancelled'
             ? 'cancelled'
@@ -376,19 +382,26 @@ function doGet(e) {
 
       if (!rDate && !rTime && !rClient && !rPhone) continue;
 
+      var rToken = (colMap.token !== -1 && colMap.token < row.length) ? cleanStr(row[colMap.token]) : '';
+      if (rToken.indexOf('Бокс') !== -1 || rToken.indexOf('бокс') !== -1) rToken = '';
+      var bookingNum = rToken || ('AD-' + (1000 + i));
+
+      var rService = (colMap.service !== -1 && colMap.service < row.length) ? cleanStr(row[colMap.service]) : '';
+      if (/^\d+$/.test(rService.trim())) rService = '';
+
       bookings.push({
         id: 'gs-' + i,
         date: rDate,
         timeSlot: rTime,
         clientName: rClient || 'Клиент с сайта',
         clientPhone: rPhone || '',
-        carModel: cleanStr(row[colMap.car]) || '',
-        serviceTitle: cleanStr(row[colMap.service]) || '',
-        totalPrice: Number(row[colMap.price]) || 0,
-        booking_number: cleanStr(row[colMap.token]) || ('AD-' + (1000 + i)),
-        boxName: cleanStr(row[colMap.box]) || 'Бокс 1',
-        status: cleanStr(row[colMap.status]) || 'pending',
-        createdAt: cleanStr(row[colMap.createdAt])
+        carModel: (colMap.car !== -1 && colMap.car < row.length) ? cleanStr(row[colMap.car]) : '',
+        serviceTitle: rService,
+        totalPrice: (colMap.price !== -1 && colMap.price < row.length) ? (Number(row[colMap.price]) || 0) : 0,
+        booking_number: bookingNum,
+        boxName: (colMap.box !== -1 && colMap.box < row.length) ? (cleanStr(row[colMap.box]) || 'Бокс 1') : 'Бокс 1',
+        status: (colMap.status !== -1 && colMap.status < row.length) ? (cleanStr(row[colMap.status]) || 'pending') : 'pending',
+        createdAt: (colMap.createdAt !== -1 && colMap.createdAt < row.length) ? cleanStr(row[colMap.createdAt]) : ''
       });
     }
     return jsonResponse({ status: 'success', bookings: bookings });
@@ -402,21 +415,28 @@ function doGet(e) {
     var rDate = cleanStr(row[colMap.date]);
     if (rDate === dateParam || rDate.indexOf(dateParam) !== -1) {
       var rTime = cleanStr(row[colMap.time]);
-      var rStatus = cleanStr(row[colMap.status]).toLowerCase();
+      var rStatus = (colMap.status !== -1 && colMap.status < row.length) ? cleanStr(row[colMap.status]).toLowerCase() : 'pending';
       if (rStatus !== 'cancelled' && rStatus !== 'отменено') {
         busySlots.push(rTime);
+        var rTokenDate = (colMap.token !== -1 && colMap.token < row.length) ? cleanStr(row[colMap.token]) : '';
+        if (rTokenDate.indexOf('Бокс') !== -1 || rTokenDate.indexOf('бокс') !== -1) rTokenDate = '';
+        var bookingNumDate = rTokenDate || ('AD-' + (1000 + i));
+
+        var rServiceDate = (colMap.service !== -1 && colMap.service < row.length) ? cleanStr(row[colMap.service]) : '';
+        if (/^\d+$/.test(rServiceDate.trim())) rServiceDate = '';
+
         dateBookings.push({
           id: 'gs-' + i,
           date: rDate,
           timeSlot: rTime,
           clientName: cleanStr(row[colMap.client]),
           clientPhone: cleanStr(row[colMap.phone]),
-          carModel: cleanStr(row[colMap.car]),
-          serviceTitle: cleanStr(row[colMap.service]),
-          totalPrice: Number(row[colMap.price]) || 0,
-          booking_number: cleanStr(row[colMap.token]) || ('AD-' + (1000 + i)),
-          boxName: cleanStr(row[colMap.box]) || 'Бокс 1',
-          status: cleanStr(row[colMap.status]) || 'pending'
+          carModel: (colMap.car !== -1 && colMap.car < row.length) ? cleanStr(row[colMap.car]) : '',
+          serviceTitle: rServiceDate,
+          totalPrice: (colMap.price !== -1 && colMap.price < row.length) ? (Number(row[colMap.price]) || 0) : 0,
+          booking_number: bookingNumDate,
+          boxName: (colMap.box !== -1 && colMap.box < row.length) ? (cleanStr(row[colMap.box]) || 'Бокс 1') : 'Бокс 1',
+          status: (colMap.status !== -1 && colMap.status < row.length) ? (cleanStr(row[colMap.status]) || 'pending') : 'pending'
         });
       }
     }
@@ -443,10 +463,45 @@ function doPost(e) {
     return jsonResponse({ status: 'success', message: 'Настройки успешно синхронизированы' });
   }
 
+  // Обновление статуса / отмена бронирования
+  if (body.action === 'updateStatus' || body.action === 'cancelBooking') {
+    var sheet = getBookingsSheet(ss);
+    var data = sheet.getDataRange().getDisplayValues();
+    var colMap = getColumnMap(data[0]);
+    var targetId = String(body.id || body.booking_number || body.token || '').trim();
+    var newStatus = body.status || 'cancelled';
+
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      var rToken = colMap.token !== -1 ? cleanStr(row[colMap.token]) : '';
+      var rRowId = 'gs-' + i;
+      if (rToken === targetId || rRowId === targetId || (body.phone && cleanStr(row[colMap.phone]).indexOf(body.phone) !== -1)) {
+        if (colMap.status !== -1) {
+          sheet.getRange(i + 1, colMap.status + 1).setValue(newStatus);
+        }
+        return jsonResponse({ status: 'success', message: 'Статус успешно обновлен' });
+      }
+    }
+    return jsonResponse({ status: 'not_found', message: 'Запись не найдена' });
+  }
+
   // Создание новой записи
   var sheet = getBookingsSheet(ss);
   var data = sheet.getDataRange().getDisplayValues();
   var colMap = getColumnMap(data[0]);
+
+  // Если колонка Номер брони отсутствует в заголовках, автоматически добавляем её в строку 1
+  if (colMap.token === -1) {
+    var lastCol = sheet.getLastColumn();
+    sheet.getRange(1, lastCol + 1).setValue('Номер брони');
+    colMap.token = lastCol;
+  }
+  // Если колонка Услуга отсутствует в заголовках, автоматически добавляем её в строку 1
+  if (colMap.service === -1) {
+    var lastCol = sheet.getLastColumn();
+    sheet.getRange(1, lastCol + 1).setValue('Услуга');
+    colMap.service = lastCol;
+  }
 
   // Записываем дату, время и телефон с текстовым апострофом, чтобы Google Sheets не форматировал их как даты/формулы
   var rawDate = String(body.date || '').trim();
@@ -505,19 +560,24 @@ function getBookingsSheet(ss) {
 
 function getColumnMap(headers) {
   var map = {
-    date: 0,
-    time: 1,
-    client: 2,
-    phone: 3,
-    car: 4,
-    service: 5,
-    price: 6,
-    token: 7,
-    box: 8,
-    status: 9,
-    createdAt: 10
+    date: -1,
+    time: -1,
+    client: -1,
+    phone: -1,
+    car: -1,
+    service: -1,
+    price: -1,
+    token: -1,
+    box: -1,
+    status: -1,
+    createdAt: -1
   };
-  if (!headers || !headers.length) return map;
+  if (!headers || !headers.length) {
+    return {
+      date: 0, time: 1, client: 2, phone: 3, car: 4,
+      service: 5, price: 6, token: 7, box: 8, status: 9, createdAt: 10
+    };
+  }
 
   for (var i = 0; i < headers.length; i++) {
     var h = String(headers[i] || '').toLowerCase().trim();
@@ -528,11 +588,18 @@ function getColumnMap(headers) {
     else if (h.indexOf('авто') !== -1 || h.indexOf('машин') !== -1 || h === 'car') map.car = i;
     else if (h.indexOf('услуг') !== -1 || h === 'service') map.service = i;
     else if (h.indexOf('стоим') !== -1 || h.indexOf('цен') !== -1 || h === 'price') map.price = i;
-    else if (h.indexOf('брон') !== -1 || h.indexOf('номер') !== -1 || h === 'token' || h === 'id') map.token = i;
-    else if (h.indexOf('бокс') !== -1 || h === 'box') map.box = i;
+    else if (h.indexOf('бокс') !== -1 || h.indexOf('пост') !== -1 || h === 'box') map.box = i;
+    else if (h.indexOf('брон') !== -1 || h.indexOf('токен') !== -1 || (h.indexOf('номер') !== -1 && h.indexOf('бокс') === -1) || h === 'token' || h === 'id') map.token = i;
     else if (h.indexOf('статус') !== -1 || h === 'status') map.status = i;
     else if (h.indexOf('создан') !== -1 || h === 'created') map.createdAt = i;
   }
+
+  if (map.date === -1) map.date = 0;
+  if (map.time === -1) map.time = 1;
+  if (map.client === -1) map.client = 2;
+  if (map.phone === -1) map.phone = 3;
+  if (map.car === -1) map.car = 4;
+
   return map;
 }
 

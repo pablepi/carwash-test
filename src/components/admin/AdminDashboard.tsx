@@ -505,6 +505,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   // Local bookings from current browser session/storage (no fake mock entries!)
   const [localTimelineBookings, setLocalTimelineBookings] = useState<AdminBooking[]>(() => {
     try {
+      const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date());
+      const tomorrowDate = new Date(Date.now() + 24 * 3600 * 1000);
+      const tomorrowStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(tomorrowDate);
+
       const raw = localStorage.getItem('apex_bookings_history');
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -518,6 +522,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             const endM = endTotalMins % 60;
             const endStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
 
+            let dayLabel = b.date || 'Сегодня';
+            if (dayLabel === todayStr) dayLabel = 'Сегодня';
+            else if (dayLabel === tomorrowStr) dayLabel = 'Завтра';
+
             return {
               id: b.id || `user-b-${idx}`,
               box_name: b.box_name || b.boxName || 'Бокс 1',
@@ -529,7 +537,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               start_time: startH,
               end_time: endStr,
               status: b.status || 'pending',
-              date: b.date || 'Сегодня',
+              date: dayLabel,
             };
           });
         }
@@ -592,7 +600,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
 
       let cleanServiceTitle = b.serviceTitle || 'Комплекс мойки';
       if (/^\d+$/.test(cleanServiceTitle.trim())) {
-        cleanServiceTitle = `Комплекс мойки (${cleanServiceTitle} ₽)`;
+        const cleanRemotePhone = (b.clientPhone || '').replace(/\D/g, '');
+        const localMatch = localTimelineBookings.find((l) => {
+          const cleanLocalPhone = (l.client_phone || '').replace(/\D/g, '');
+          return (
+            (cleanRemotePhone && cleanLocalPhone && cleanRemotePhone === cleanLocalPhone) ||
+            (l.car_model && b.carModel && l.car_model.toLowerCase() === b.carModel.toLowerCase())
+          );
+        });
+        if (localMatch && localMatch.service_title && !/^\d+$/.test(localMatch.service_title)) {
+          cleanServiceTitle = localMatch.service_title;
+        } else {
+          cleanServiceTitle = `Комплекс мойки (${cleanServiceTitle} ₽)`;
+        }
       }
 
       return {
@@ -609,13 +629,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
         date: dayLabel,
       };
     });
-  }, [remoteBookings, statusOverrides]);
+  }, [remoteBookings, statusOverrides, localTimelineBookings]);
 
-  // Combined bookings for Timeline
+  // Combined bookings for Timeline with strict cross-sync deduplication
   const bookings = useMemo((): AdminBooking[] => {
     if (mappedRemoteAdminBookings.length > 0) {
-      const remoteIds = new Set(mappedRemoteAdminBookings.map((r) => r.id));
-      const localFiltered = localTimelineBookings.filter((b) => !remoteIds.has(b.id));
+      // Filter out any local booking that is already present in Google Sheets
+      const localFiltered = localTimelineBookings.filter((local) => {
+        const cleanLocalPhone = (local.client_phone || '').replace(/\D/g, '');
+        const localCar = (local.car_model || '').trim().toLowerCase();
+        const localNum = ((local as any).booking_number || (local as any).token || local.id || '').toUpperCase();
+
+        return !mappedRemoteAdminBookings.some((remote) => {
+          // 1. By ID or token
+          if (local.id && remote.id && local.id === remote.id) return true;
+          const remoteNum = ((remote as any).booking_number || (remote as any).token || remote.id || '').toUpperCase();
+          if (localNum && remoteNum && localNum === remoteNum && !localNum.startsWith('БОКС')) return true;
+
+          // 2. By phone + start_time
+          const cleanRemotePhone = (remote.client_phone || '').replace(/\D/g, '');
+          if (cleanLocalPhone && cleanRemotePhone && cleanLocalPhone === cleanRemotePhone && local.start_time === remote.start_time) {
+            return true;
+          }
+
+          // 3. By car + start_time
+          const remoteCar = (remote.car_model || '').trim().toLowerCase();
+          if (localCar && remoteCar && localCar === remoteCar && local.start_time === remote.start_time) {
+            return true;
+          }
+
+          return false;
+        });
+      });
+
       return [...mappedRemoteAdminBookings, ...localFiltered];
     }
     return localTimelineBookings;
