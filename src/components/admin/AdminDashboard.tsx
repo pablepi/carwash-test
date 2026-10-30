@@ -578,32 +578,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     const tomorrowStr = tomorrow.toISOString().slice(0, 10);
 
     return remoteBookings.map((b) => {
-      const [h, m] = (b.timeSlot || '12:00').split(':').map(Number);
-      const endTotalMins = (h || 12) * 60 + (m || 0) + 60;
+      // Clean start and end times
+      const timeStr = String(b.timeSlot || '12:00').trim();
+      const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
+      const h = timeMatch ? parseInt(timeMatch[1], 10) : 12;
+      const m = timeMatch ? parseInt(timeMatch[2], 10) : 0;
+      const startFormatted = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      const endTotalMins = h * 60 + m + 60;
       const endH = Math.floor(endTotalMins / 60) % 24;
       const endM = endTotalMins % 60;
       const endStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
 
+      // Clean date label
       let dayLabel = 'Сегодня';
-      if (b.date === todayStr) {
+      if (!b.date || b.date === todayStr) {
         dayLabel = 'Сегодня';
       } else if (b.date === tomorrowStr) {
         dayLabel = 'Завтра';
-      } else if (b.date) {
+      } else {
         dayLabel = b.date;
       }
 
+      // Clean box name: "1" -> "Бокс 1", "2" -> "Бокс 2"
+      const rawBox = String(b.boxName || '1').trim();
+      const boxDigits = rawBox.match(/\d+/);
+      const boxNum = boxDigits ? boxDigits[0] : '1';
+      const cleanBoxName = `Бокс ${boxNum}`;
+      const cleanBoxId = `box-${boxNum}`;
+
+      // Clean status
+      const s = String(b.status || '').toLowerCase().trim();
+      let cleanStatus: AdminBooking['status'] = 'pending';
+      if (s === 'in_progress' || s.includes('моется') || s.includes('в работе')) cleanStatus = 'in_progress';
+      else if (s === 'completed' || s.includes('готов')) cleanStatus = 'completed';
+      else if (s === 'done' || s.includes('завершен')) cleanStatus = 'done';
+      else if (s === 'cancelled' || s.includes('отмен')) cleanStatus = 'cancelled';
+
       return {
         id: b.id || b.booking_number,
-        box_name: b.boxName || 'Бокс 1',
-        box_id: b.boxName?.toLowerCase().includes('2') ? 'box-2' : b.boxName?.toLowerCase().includes('3') ? 'box-3' : 'box-1',
+        box_name: cleanBoxName,
+        box_id: cleanBoxId,
         client_name: b.clientName,
         client_phone: b.clientPhone,
         car_model: b.carModel,
         service_title: b.serviceTitle,
-        start_time: b.timeSlot,
+        start_time: startFormatted,
         end_time: endStr,
-        status: b.status,
+        status: cleanStatus,
         date: dayLabel,
       };
     });
@@ -1148,7 +1169,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   };
 
   const activeBookings = viewMode === 'day'
-    ? bookings.filter((b) => b.date === 'Сегодня')
+    ? bookings.filter((b) => b.date === 'Сегодня' || b.date === new Date().toISOString().slice(0, 10))
     : bookings;
 
   const inProgressCount = activeBookings.filter((b) => b.status === 'in_progress').length;

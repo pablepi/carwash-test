@@ -21,19 +21,21 @@ export const BoxTimeline: React.FC<BoxTimelineProps> = ({
   const [targetBox, setTargetBox] = useState<string>('Бокс 1');
   const [targetTime, setTargetTime] = useState<string>('12:00');
 
-  const getStatusBadge = (status: AdminBooking['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="warning">Ожидает</Badge>;
-      case 'in_progress':
-        return <Badge variant="blue">Моется</Badge>;
-      case 'completed':
-        return <Badge variant="success">Готова</Badge>;
-      case 'done':
-        return <Badge variant="neutral">Завершена</Badge>;
-      case 'cancelled':
-        return <Badge variant="danger">Отменена</Badge>;
+  const getStatusBadge = (status: string) => {
+    const s = String(status || '').toLowerCase().trim();
+    if (s === 'in_progress' || s.includes('моется') || s.includes('в работе')) {
+      return <Badge variant="blue">Моется</Badge>;
     }
+    if (s === 'completed' || s.includes('готов')) {
+      return <Badge variant="success">Готова</Badge>;
+    }
+    if (s === 'done' || s.includes('завершен')) {
+      return <Badge variant="neutral">Завершена</Badge>;
+    }
+    if (s === 'cancelled' || s.includes('отмен')) {
+      return <Badge variant="danger">Отменена</Badge>;
+    }
+    return <Badge variant="warning">Ожидает</Badge>;
   };
 
   const handleOpenMove = (b: AdminBooking) => {
@@ -61,8 +63,17 @@ export const BoxTimeline: React.FC<BoxTimelineProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {boxes.map((boxName) => {
-          const boxBookings = bookings.filter((b) => b.box_name === boxName);
+        {boxes.map((boxName, boxIdx) => {
+          const targetNum = String(boxIdx + 1);
+          const boxBookings = bookings.filter((b) => {
+            const raw = String(b.box_name || b.box_id || '').trim();
+            if (raw === boxName) return true;
+            if (raw === targetNum) return true;
+            const digits = raw.match(/\d+/);
+            if (digits && digits[0] === targetNum) return true;
+            if (!raw && boxIdx === 0) return true;
+            return false;
+          });
 
           return (
             <div
@@ -89,11 +100,18 @@ export const BoxTimeline: React.FC<BoxTimelineProps> = ({
                       key={b.id}
                       className="p-3 rounded-xl bg-base-surface border border-white/5 space-y-2"
                     >
-                      {/* Time + Status */}
+                      {/* Time + Date + Status */}
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="text-xs font-mono font-bold text-accent-blue tabular-nums whitespace-nowrap">
-                          {b.start_time} — {b.end_time}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-mono font-bold text-accent-blue tabular-nums whitespace-nowrap">
+                            {b.start_time} — {b.end_time}
+                          </span>
+                          {b.date && b.date !== 'Сегодня' && (
+                            <span className="text-[10px] font-mono text-text-tertiary bg-white/[0.06] px-1.5 py-0.5 rounded">
+                              {b.date}
+                            </span>
+                          )}
+                        </div>
                         {getStatusBadge(b.status)}
                       </div>
 
