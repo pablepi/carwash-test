@@ -127,6 +127,10 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               setConfig((prev) => ({
                 ...prev,
                 ...validation.data,
+                statusOverrides: {
+                  ...(prev.statusOverrides || {}),
+                  ...((validation.data as any).statusOverrides || {}),
+                },
               }));
               try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(validation.data));
@@ -165,6 +169,9 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           theme: updater.theme ? { ...prev.theme, ...updater.theme } : prev.theme,
           contacts: updater.contacts ? { ...prev.contacts, ...updater.contacts } : prev.contacts,
           workflow: updater.workflow ? { ...prev.workflow, ...updater.workflow } : prev.workflow,
+          statusOverrides: (updater as any).statusOverrides
+            ? { ...((prev as any).statusOverrides || {}), ...(updater as any).statusOverrides }
+            : (prev as any).statusOverrides || {},
         };
       }
 

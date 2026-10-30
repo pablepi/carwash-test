@@ -304,6 +304,71 @@ export async function fetchConfigFromGoogleSheets(
 }
 
 /**
+ * Remotely updates a booking status in Google Sheets.
+ * Supports multiple lookup identifiers (ID, booking token, phone, car plate)
+ * and uses both POST and GET fallback for bulletproof cross-origin execution.
+ */
+export async function updateRemoteBookingStatus(
+  bookingInfo: {
+    id: string;
+    booking_number?: string;
+    clientPhone?: string;
+    carModel?: string;
+  },
+  newStatus: string,
+  scriptUrl: string = DEFAULT_GOOGLE_SHEETS_URL
+): Promise<{ success: boolean; message?: string }> {
+  const url = scriptUrl?.trim() || DEFAULT_GOOGLE_SHEETS_URL;
+  const cleanPhone = (bookingInfo.clientPhone || '').replace(/\D/g, '');
+  const cleanPlate = (bookingInfo.carModel || '')
+    .match(/\[(.*?)\]/)?.[1]
+    ?.replace(/[^A-Za-zА-Яа-я0-9]/g, '')
+    .toUpperCase() || '';
+
+  // 1. Try POST updateStatus
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify({
+        action: 'updateStatus',
+        id: bookingInfo.id,
+        booking_number: bookingInfo.booking_number,
+        phone: cleanPhone,
+        plate: cleanPlate,
+        status: newStatus,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      if (data && data.status === 'success') {
+        return { success: true };
+      }
+    }
+  } catch (err) {
+    console.warn('POST updateStatus warning, falling back to GET:', err);
+  }
+
+  // 2. Try GET updateStatus fallback
+  try {
+    const params = new URLSearchParams({
+      action: 'updateStatus',
+      id: bookingInfo.id || '',
+      booking_number: bookingInfo.booking_number || '',
+      phone: cleanPhone,
+      plate: cleanPlate,
+      status: newStatus,
+    });
+    await fetch(`${url}?${params.toString()}`);
+    return { success: true };
+  } catch (fallbackErr: any) {
+    return { success: false, message: fallbackErr.message };
+  }
+}
+
+/**
  * Tests connection to Google Sheets Web App.
  */
 export async function testGoogleSheetsConnection(
@@ -360,6 +425,38 @@ function doGet(e) {
     } catch (err) {
       return jsonResponse({ status: 'error', message: 'Config parsing error' });
     }
+  }
+
+  // 1.1 Обновление статуса записи через GET
+  if (action === 'updateStatus') {
+    var sheetStatus = getBookingsSheet(ss);
+    var dataStatus = sheetStatus.getDataRange().getDisplayValues();
+    var colMapStatus = getColumnMap(dataStatus[0]);
+    var targetIdGet = String((e && e.parameter && (e.parameter.id || e.parameter.booking_number || e.parameter.token)) || '').trim();
+    var newStatusGet = (e && e.parameter && e.parameter.status) || 'pending';
+    var pPhone = String((e && e.parameter && e.parameter.phone) || '').replace(/\\D/g, '');
+    var pPlate = String((e && e.parameter && e.parameter.plate) || '').toUpperCase().replace(/[^A-ZА-Я0-9]/g, '');
+
+    for (var sIdx = 1; sIdx < dataStatus.length; sIdx++) {
+      var rowS = dataStatus[sIdx];
+      var rTokenS = colMapStatus.token !== -1 ? cleanStr(rowS[colMapStatus.token]) : '';
+      var rRowIdS = 'gs-' + sIdx;
+      var rPhoneS = colMapStatus.phone !== -1 ? cleanStr(rowS[colMapStatus.phone]).replace(/\\D/g, '') : '';
+      var rCarS = colMapStatus.car !== -1 ? cleanStr(rowS[colMapStatus.car]).toUpperCase().replace(/[^A-ZА-Я0-9]/g, '') : '';
+
+      var isMatchS = false;
+      if (targetIdGet && (rTokenS === targetIdGet || rRowIdS === targetIdGet)) isMatchS = true;
+      if (!isMatchS && pPlate && rCarS && rCarS.indexOf(pPlate) !== -1) isMatchS = true;
+      if (!isMatchS && pPhone && pPhone.length >= 7 && rPhoneS && rPhoneS.indexOf(pPhone) !== -1) isMatchS = true;
+
+      if (isMatchS) {
+        if (colMapStatus.status !== -1) {
+          sheetStatus.getRange(sIdx + 1, colMapStatus.status + 1).setValue(newStatusGet);
+        }
+        return jsonResponse({ status: 'success', message: 'Статус успешно обновлен' });
+      }
+    }
+    return jsonResponse({ status: 'not_found', message: 'Запись не найдена' });
   }
 
   // 2. Получение всех записей для админки (для любых устройств)
@@ -470,12 +567,22 @@ function doPost(e) {
     var colMap = getColumnMap(data[0]);
     var targetId = String(body.id || body.booking_number || body.token || '').trim();
     var newStatus = body.status || 'cancelled';
+    var pPhone = String(body.phone || '').replace(/\\D/g, '');
+    var pPlate = String(body.plate || '').toUpperCase().replace(/[^A-ZА-Я0-9]/g, '');
 
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       var rToken = colMap.token !== -1 ? cleanStr(row[colMap.token]) : '';
       var rRowId = 'gs-' + i;
-      if (rToken === targetId || rRowId === targetId || (body.phone && cleanStr(row[colMap.phone]).indexOf(body.phone) !== -1)) {
+      var rPhone = colMap.phone !== -1 ? cleanStr(row[colMap.phone]).replace(/\\D/g, '') : '';
+      var rCar = colMap.car !== -1 ? cleanStr(row[colMap.car]).toUpperCase().replace(/[^A-ZА-Я0-9]/g, '') : '';
+
+      var isMatch = false;
+      if (targetId && (rToken === targetId || rRowId === targetId)) isMatch = true;
+      if (!isMatch && pPlate && rCar && rCar.indexOf(pPlate) !== -1) isMatch = true;
+      if (!isMatch && pPhone && pPhone.length >= 7 && rPhone && rPhone.indexOf(pPhone) !== -1) isMatch = true;
+
+      if (isMatch) {
         if (colMap.status !== -1) {
           sheet.getRange(i + 1, colMap.status + 1).setValue(newStatus);
         }

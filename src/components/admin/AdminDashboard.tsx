@@ -47,6 +47,7 @@ import {
   sendBookingToGoogleSheets,
   saveConfigToGoogleSheets,
   fetchConfigFromGoogleSheets,
+  updateRemoteBookingStatus,
   GOOGLE_APPS_SCRIPT_TEMPLATE,
   RemoteBookingRecord,
 } from '@/lib/google-sheets';
@@ -437,15 +438,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const [isCopiedScript, setIsCopiedScript] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
-  // Local status overrides so user completions persist across 20s polling cycles
+  // Status overrides synced across devices via SiteConfig & local cache
   const [statusOverrides, setStatusOverrides] = useState<Record<string, AdminBooking['status']>>(() => {
     try {
       const raw = localStorage.getItem('apex_status_overrides');
-      return raw ? JSON.parse(raw) : {};
+      const local = raw ? JSON.parse(raw) : {};
+      const remote = (siteConfig as any)?.statusOverrides || {};
+      return { ...remote, ...local };
     } catch {
-      return {};
+      return (siteConfig as any)?.statusOverrides || {};
     }
   });
+
+  // Sync statusOverrides whenever remote siteConfig updates
+  useEffect(() => {
+    if ((siteConfig as any)?.statusOverrides) {
+      setStatusOverrides((prev) => ({
+        ...prev,
+        ...((siteConfig as any).statusOverrides || {}),
+      }));
+    }
+  }, [siteConfig]);
 
   const [googleSheetsUrlInput, setGoogleSheetsUrlInput] = useState<string>(() => {
     const raw = (siteConfig as any).integrations?.googleSheetsUrl;
@@ -895,18 +908,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const [newSvcPriceCrossover, setNewSvcPriceCrossover] = useState('1900');
   const [newSvcPriceSuv, setNewSvcPriceSuv] = useState('2200');
 
-  // Handle Box Timeline Status & Movement
+  // Handle Box Timeline Status & Movement with multi-device synchronization
   const handleStatusChange = (id: string, newStatus: AdminBooking['status']) => {
-    setStatusOverrides((prev) => {
-      const next = { ...prev, [id]: newStatus };
-      try {
-        localStorage.setItem('apex_status_overrides', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
+    // 1. Locate the booking being updated
+    const target =
+      bookings.find((b) => b.id === id || (b as any).booking_number === id) ||
+      localTimelineBookings.find((b) => b.id === id || (b as any).booking_number === id) ||
+      remoteBookings.find((b) => b.id === id || b.booking_number === id);
+
+    const bNum = (target as any)?.booking_number || '';
+    const cleanPhone = ((target as any)?.client_phone || (target as any)?.clientPhone || '').replace(/\D/g, '');
+    const cleanPlate = ((target as any)?.car_model || (target as any)?.carModel || '')
+      .match(/\[(.*?)\]/)?.[1]
+      ?.replace(/[^A-Za-zА-Яа-я0-9]/g, '')
+      .toUpperCase() || '';
+
+    // Multi-key overrides so any lookup (by id, by token, by phone, or by plate) resolves the new status
+    const nextOverrides: Record<string, AdminBooking['status']> = {
+      ...statusOverrides,
+      [id]: newStatus,
+      ...(bNum ? { [bNum]: newStatus } : {}),
+      ...(cleanPhone && cleanPhone.length >= 7 ? { [`phone_${cleanPhone}`]: newStatus } : {}),
+      ...(cleanPlate ? { [`plate_${cleanPlate}`]: newStatus } : {}),
+    };
+
+    setStatusOverrides(nextOverrides);
+    try {
+      localStorage.setItem('apex_status_overrides', JSON.stringify(nextOverrides));
+    } catch {}
 
     setLocalTimelineBookings((prev: AdminBooking[]) =>
-      prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
+      prev.map((b) => (b.id === id || (b as any).booking_number === id ? { ...b, status: newStatus } : b))
     );
     setRemoteBookings((prev: RemoteBookingRecord[]) =>
       prev.map((b) => (b.id === id || b.booking_number === id ? { ...b, status: newStatus } : b))
@@ -926,6 +958,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
         }
       }
     } catch {}
+
+    // 2. Synchronize to shared siteConfig and push to Google Sheets
+    const updatedSiteConfig = {
+      ...siteConfig,
+      statusOverrides: nextOverrides,
+    };
+    updateSiteConfig(updatedSiteConfig);
+    saveConfigToGoogleSheets(updatedSiteConfig, googleSheetsUrlInput).catch(() => {});
+
+    // 3. Update status column directly in Google Sheets
+    if (target) {
+      updateRemoteBookingStatus(
+        {
+          id,
+          booking_number: bNum,
+          clientPhone: (target as any).client_phone || (target as any).clientPhone,
+          carModel: (target as any).car_model || (target as any).carModel,
+        },
+        newStatus,
+        googleSheetsUrlInput
+      ).catch(() => {});
+    }
 
     showToast(newStatus === 'done' ? 'Запись завершена и убрана из таймлайна' : `Статус записи обновлен`);
   };

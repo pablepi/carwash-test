@@ -18,8 +18,16 @@ import {
   CircleNotch,
   WarningCircle,
   CheckCircle,
+  Clock,
+  Drop,
+  Sparkle,
+  ArrowsClockwise,
 } from '@phosphor-icons/react';
-import { fetchBookingsWithStatus, DEFAULT_GOOGLE_SHEETS_URL } from '@/lib/google-sheets';
+import {
+  fetchBookingsWithStatus,
+  updateRemoteBookingStatus,
+  DEFAULT_GOOGLE_SHEETS_URL,
+} from '@/lib/google-sheets';
 
 export const MyBooking: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -36,11 +44,65 @@ export const MyBooking: React.FC = () => {
   const [inputValue, setInputValue] = useState(tokenFromUrl || plateFromUrl || '');
   const [bookingData, setBookingData] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
+  const [lastCheckTime, setLastCheckTime] = useState<Date>(new Date());
   const [notFound, setNotFound] = useState(false);
   const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
 
   const googleSheetsUrl =
     (siteConfig as any)?.integrations?.googleSheetsUrl || DEFAULT_GOOGLE_SHEETS_URL;
+
+  // Helper to persist updated status in browser cache
+  const updateLocalBookingStatus = (idOrNum: string, newStatus: string) => {
+    try {
+      const raw = localStorage.getItem('apex_bookings_history');
+      if (!raw) return;
+      const list = JSON.parse(raw);
+      if (!Array.isArray(list)) return;
+      const updated = list.map((b: any) => {
+        const match =
+          b.id === idOrNum ||
+          b.booking_number === idOrNum ||
+          b.token === idOrNum ||
+          b.cancellation_token === idOrNum;
+        return match ? { ...b, status: newStatus } : b;
+      });
+      localStorage.setItem('apex_bookings_history', JSON.stringify(updated));
+    } catch {}
+  };
+
+  // Multi-key resolution of current car status (checking remote overrides, then raw status)
+  const resolveEffectiveStatus = useCallback(
+    (
+      rawStatus: string,
+      id?: string,
+      num?: string,
+      phone?: string,
+      car?: string
+    ): 'pending' | 'in_progress' | 'completed' | 'done' | 'cancelled' => {
+      const overrides = (siteConfig as any)?.statusOverrides || {};
+      const cleanPhone = (phone || '').replace(/\D/g, '');
+      const cleanPlate = (car || '')
+        .match(/\[(.*?)\]/)?.[1]
+        ?.replace(/[^A-Za-zА-Яа-я0-9]/g, '')
+        .toUpperCase() || '';
+
+      if (id && overrides[id]) return overrides[id];
+      if (num && overrides[num]) return overrides[num];
+      if (cleanPlate && overrides[`plate_${cleanPlate}`]) return overrides[`plate_${cleanPlate}`];
+      if (cleanPhone && cleanPhone.length >= 7 && overrides[`phone_${cleanPhone}`]) {
+        return overrides[`phone_${cleanPhone}`];
+      }
+
+      const s = String(rawStatus || '').toLowerCase().trim();
+      if (s === 'in_progress' || s.includes('моется') || s.includes('в работе')) return 'in_progress';
+      if (s === 'completed' || s.includes('готов')) return 'completed';
+      if (s === 'done' || s.includes('завершен')) return 'done';
+      if (s === 'cancelled' || s.includes('отмен')) return 'cancelled';
+      return 'pending';
+    },
+    [siteConfig]
+  );
 
   // Search booking across local storage and remote Google Sheets
   const lookupBooking = useCallback(
@@ -87,70 +149,88 @@ export const MyBooking: React.FC = () => {
         return false;
       };
 
-      // 1. First search in local storage history
+      // 1. Search in local storage history
+      let localMatch: any = null;
       try {
         const stored: any[] = JSON.parse(localStorage.getItem('apex_bookings_history') || '[]');
-        const localFound = stored.find(matchesQuery);
+        localMatch = stored.find(matchesQuery);
 
-        if (localFound) {
+        if (localMatch) {
+          const effectiveStatus = resolveEffectiveStatus(
+            localMatch.status || 'pending',
+            localMatch.id,
+            localMatch.booking_number || localMatch.token,
+            localMatch.client_phone || localMatch.clientPhone,
+            localMatch.car_model || localMatch.carModel
+          );
+
           setBookingData({
-            id: localFound.id || localFound.booking_number,
+            id: localMatch.id || localMatch.booking_number,
             booking_number:
-              localFound.booking_number ||
-              localFound.token ||
-              localFound.cancellation_token ||
-              localFound.id,
-            client_name: localFound.client_name || localFound.clientName || 'Гость',
-            client_phone: localFound.client_phone || localFound.clientPhone || '',
-            car_model: localFound.car_model || localFound.carModel || 'Автомобиль',
-            service_title: localFound.service_title || localFound.serviceTitle || 'Комплекс мойки',
+              localMatch.booking_number ||
+              localMatch.token ||
+              localMatch.cancellation_token ||
+              localMatch.id,
+            client_name: localMatch.client_name || localMatch.clientName || 'Гость',
+            client_phone: localMatch.client_phone || localMatch.clientPhone || '',
+            car_model: localMatch.car_model || localMatch.carModel || 'Автомобиль',
+            service_title: localMatch.service_title || localMatch.serviceTitle || 'Комплекс мойки',
             timeStr:
-              localFound.timeStr ||
-              (localFound.start_time && !localFound.start_time.includes('T')
-                ? localFound.start_time
+              localMatch.timeStr ||
+              (localMatch.start_time && !localMatch.start_time.includes('T')
+                ? localMatch.start_time
                 : '12:00'),
-            date: localFound.date || 'Сегодня',
+            date: localMatch.date || 'Сегодня',
             total_price:
-              localFound.total_price || localFound.servicePrice || localFound.totalPrice || 0,
-            box_name: localFound.box_name || localFound.boxName || 'Бокс 1',
-            status: localFound.status || 'pending',
-            address: localFound.address || tenant.address,
+              localMatch.total_price || localMatch.servicePrice || localMatch.totalPrice || 0,
+            box_name: localMatch.box_name || localMatch.boxName || 'Бокс 1',
+            status: effectiveStatus,
+            address: localMatch.address || tenant.address,
             source: 'local',
           });
           setIsLoading(false);
-          return;
         }
       } catch (err) {
         console.warn('Local storage booking search error:', err);
       }
 
-      // 2. Search in remote Google Sheets database
+      // 2. Search in remote Google Sheets database to pull latest data & status
       try {
         const res = await fetchBookingsWithStatus(googleSheetsUrl);
         if (res.success && Array.isArray(res.bookings) && res.bookings.length > 0) {
           const remoteFound = res.bookings.find(matchesQuery);
 
           if (remoteFound) {
-            let cleanTitle = remoteFound.serviceTitle || 'Комплекс мойки';
+            let cleanTitle = remoteFound.serviceTitle || localMatch?.service_title || 'Комплекс мойки';
             if (/^\d+$/.test(cleanTitle.trim())) {
-              cleanTitle = `Комплекс мойки (${cleanTitle} ₽)`;
+              cleanTitle = localMatch?.service_title || `Комплекс мойки (${cleanTitle} ₽)`;
             }
 
-            setBookingData({
+            const effectiveStatus = resolveEffectiveStatus(
+              remoteFound.status,
+              remoteFound.id,
+              remoteFound.booking_number,
+              remoteFound.clientPhone,
+              remoteFound.carModel
+            );
+
+            setBookingData((prev: any) => ({
               id: remoteFound.id || remoteFound.booking_number,
-              booking_number: remoteFound.booking_number || remoteFound.id,
-              client_name: remoteFound.clientName || 'Гость',
-              client_phone: remoteFound.clientPhone || '',
-              car_model: remoteFound.carModel || 'Автомобиль',
+              booking_number: remoteFound.booking_number || prev?.booking_number || remoteFound.id,
+              client_name: remoteFound.clientName || prev?.client_name || 'Гость',
+              client_phone: remoteFound.clientPhone || prev?.client_phone || '',
+              car_model: remoteFound.carModel || prev?.car_model || 'Автомобиль',
               service_title: cleanTitle,
-              timeStr: remoteFound.timeSlot || '12:00',
-              date: remoteFound.date || 'Сегодня',
-              total_price: remoteFound.totalPrice || 0,
-              box_name: remoteFound.boxName || 'Бокс 1',
-              status: remoteFound.status || 'pending',
+              timeStr: remoteFound.timeSlot || prev?.timeStr || '12:00',
+              date: remoteFound.date || prev?.date || 'Сегодня',
+              total_price: remoteFound.totalPrice || prev?.total_price || 0,
+              box_name: remoteFound.boxName || prev?.box_name || 'Бокс 1',
+              status: effectiveStatus,
               address: tenant.address,
               source: 'remote',
-            });
+            }));
+
+            updateLocalBookingStatus(remoteFound.id || remoteFound.booking_number, effectiveStatus);
             setIsLoading(false);
             return;
           }
@@ -159,13 +239,108 @@ export const MyBooking: React.FC = () => {
         console.warn('Google Sheets booking search error:', err);
       }
 
+      if (localMatch) {
+        return;
+      }
+
       // 3. Not found
       setBookingData(null);
       setNotFound(true);
       setIsLoading(false);
     },
-    [googleSheetsUrl, tenant.address]
+    [googleSheetsUrl, tenant.address, resolveEffectiveStatus]
   );
+
+  // Poll remote status for active booking
+  const refreshBookingStatus = useCallback(
+    async (silent = false) => {
+      if (!bookingData) return;
+      if (!silent) setIsRefreshingStatus(true);
+
+      try {
+        // 1. Check shared config overrides first
+        const overrideStatus = resolveEffectiveStatus(
+          bookingData.status,
+          bookingData.id,
+          bookingData.booking_number,
+          bookingData.client_phone,
+          bookingData.car_model
+        );
+
+        if (overrideStatus !== bookingData.status) {
+          setBookingData((prev: any) => (prev ? { ...prev, status: overrideStatus } : null));
+          updateLocalBookingStatus(bookingData.id || bookingData.booking_number, overrideStatus);
+        }
+
+        // 2. Fetch live data from Google Sheets
+        const res = await fetchBookingsWithStatus(googleSheetsUrl);
+        if (res.success && Array.isArray(res.bookings)) {
+          const cleanQ = (bookingData.booking_number || bookingData.id || '').toUpperCase().trim();
+          const cleanPlate = (bookingData.car_model || '')
+            .match(/\[(.*?)\]/)?.[1]
+            ?.replace(/[^A-Za-zА-Яа-я0-9]/g, '')
+            .toUpperCase() || '';
+          const cleanPhone = (bookingData.client_phone || '').replace(/\D/g, '');
+
+          const match = res.bookings.find((b) => {
+            const num = (b.booking_number || b.id || '').toUpperCase().trim();
+            if (cleanQ && num && (num === cleanQ || num.includes(cleanQ) || cleanQ.includes(num))) return true;
+            const car = (b.carModel || '').toUpperCase().replace(/[^A-Za-zА-Яа-я0-9]/g, '');
+            if (cleanPlate && car.includes(cleanPlate)) return true;
+            const phone = (b.clientPhone || '').replace(/\D/g, '');
+            if (cleanPhone.length >= 7 && phone && phone.includes(cleanPhone)) return true;
+            return false;
+          });
+
+          if (match) {
+            const finalStatus = resolveEffectiveStatus(
+              match.status,
+              match.id,
+              match.booking_number,
+              match.clientPhone,
+              match.carModel
+            );
+            if (finalStatus !== bookingData.status) {
+              setBookingData((prev: any) => (prev ? { ...prev, status: finalStatus } : null));
+              updateLocalBookingStatus(bookingData.id || bookingData.booking_number, finalStatus);
+            }
+          }
+        }
+        setLastCheckTime(new Date());
+      } catch (e) {
+        console.warn('Status refresh error:', e);
+      } finally {
+        if (!silent) setIsRefreshingStatus(false);
+      }
+    },
+    [bookingData, googleSheetsUrl, resolveEffectiveStatus]
+  );
+
+  // Auto-poll status every 10 seconds while the client is on the page
+  useEffect(() => {
+    if (!bookingData) return;
+    const interval = setInterval(() => {
+      refreshBookingStatus(true);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [bookingData, refreshBookingStatus]);
+
+  // Sync status if siteConfig changes in background
+  useEffect(() => {
+    if (bookingData && (siteConfig as any)?.statusOverrides) {
+      const overrideStatus = resolveEffectiveStatus(
+        bookingData.status,
+        bookingData.id,
+        bookingData.booking_number,
+        bookingData.client_phone,
+        bookingData.car_model
+      );
+      if (overrideStatus !== bookingData.status) {
+        setBookingData((prev: any) => (prev ? { ...prev, status: overrideStatus } : null));
+        updateLocalBookingStatus(bookingData.id || bookingData.booking_number, overrideStatus);
+      }
+    }
+  }, [siteConfig, bookingData, resolveEffectiveStatus]);
 
   // Auto-search if token or plate is in URL, otherwise auto-load latest booking on current device
   useEffect(() => {
@@ -180,6 +355,14 @@ export const MyBooking: React.FC = () => {
         const stored: any[] = JSON.parse(localStorage.getItem('apex_bookings_history') || '[]');
         if (stored.length > 0) {
           const latest = stored[0];
+          const effectiveStatus = resolveEffectiveStatus(
+            latest.status || 'pending',
+            latest.id,
+            latest.booking_number || latest.token,
+            latest.client_phone || latest.clientPhone,
+            latest.car_model || latest.carModel
+          );
+
           setBookingData({
             id: latest.id || latest.booking_number,
             booking_number:
@@ -200,14 +383,14 @@ export const MyBooking: React.FC = () => {
             total_price:
               latest.total_price || latest.servicePrice || latest.totalPrice || 0,
             box_name: latest.box_name || latest.boxName || 'Бокс 1',
-            status: latest.status || 'pending',
+            status: effectiveStatus,
             address: latest.address || tenant.address,
             source: 'local',
           });
         }
       } catch (e) {}
     }
-  }, [tokenFromUrl, plateFromUrl, lookupBooking, tenant.address]);
+  }, [tokenFromUrl, plateFromUrl, lookupBooking, tenant.address, resolveEffectiveStatus]);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -224,34 +407,19 @@ export const MyBooking: React.FC = () => {
     setCancelSuccessMsg('Запись успешно отменена.');
 
     // 1. Update localStorage
-    try {
-      const stored: any[] = JSON.parse(localStorage.getItem('apex_bookings_history') || '[]');
-      const updatedStored = stored.map((b) => {
-        const matchesId = b.id === bookingData.id;
-        const matchesNum =
-          b.booking_number && b.booking_number === bookingData.booking_number;
-        if (matchesId || matchesNum) {
-          return { ...b, status: 'cancelled' };
-        }
-        return b;
-      });
-      localStorage.setItem('apex_bookings_history', JSON.stringify(updatedStored));
-    } catch (e) {}
+    updateLocalBookingStatus(bookingData.id || bookingData.booking_number, 'cancelled');
 
     // 2. Send cancellation to Google Sheets if connected
-    try {
-      fetch(googleSheetsUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'updateStatus',
-          id: bookingData.id,
-          booking_number: bookingData.booking_number,
-          status: 'cancelled',
-          phone: bookingData.client_phone,
-        }),
-      }).catch(() => {});
-    } catch (e) {}
+    updateRemoteBookingStatus(
+      {
+        id: bookingData.id,
+        booking_number: bookingData.booking_number,
+        clientPhone: bookingData.client_phone,
+        carModel: bookingData.car_model,
+      },
+      'cancelled',
+      googleSheetsUrl
+    ).catch(() => {});
   };
 
   const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent(tenant.address)}`;
@@ -421,6 +589,141 @@ export const MyBooking: React.FC = () => {
                   ? 'Моется в боксе'
                   : 'Активна (Ожидает заезда)'}
               </Badge>
+            </div>
+
+            {/* Live Car Status Tracker & Auto-Sync Card */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    {bookingData.status === 'in_progress' ? (
+                      <>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-blue opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-blue"></span>
+                      </>
+                    ) : bookingData.status === 'completed' || bookingData.status === 'done' ? (
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                    ) : bookingData.status === 'cancelled' ? (
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                    ) : (
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+                    )}
+                  </span>
+                  <span className="text-xs uppercase tracking-wider text-white/70 font-bold">
+                    Текущий статус машины в боксе
+                  </span>
+                </div>
+
+                {/* Manual refresh button with animated icon */}
+                <button
+                  type="button"
+                  onClick={() => refreshBookingStatus(false)}
+                  disabled={isRefreshingStatus}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] text-xs font-semibold text-white/90 hover:text-white transition-all active:scale-95 border border-white/10"
+                  title="Проверить статус"
+                >
+                  <ArrowsClockwise
+                    size={14}
+                    className={isRefreshingStatus ? 'animate-spin text-accent-blue' : ''}
+                  />
+                  <span>{isRefreshingStatus ? 'Проверка...' : 'Обновить статус'}</span>
+                </button>
+              </div>
+
+              {bookingData.status === 'cancelled' ? (
+                <div className="p-4 rounded-xl bg-rose-950/30 border border-rose-500/20 text-rose-300 text-xs">
+                  <span className="font-bold block text-sm mb-1 text-rose-400">Бронирование отменено</span>
+                  Запись на мойку была отменена. Чтобы выбрать другое время или автомобиль, вернитесь на главную страницу.
+                </div>
+              ) : (
+                <>
+                  {/* Step Progress Indicators */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    {/* Step 1: Ожидает */}
+                    <div
+                      className={`p-3 rounded-xl border text-center transition-all ${
+                        bookingData.status === 'pending'
+                          ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 ring-1 ring-amber-500/30'
+                          : bookingData.status === 'in_progress' || bookingData.status === 'completed' || bookingData.status === 'done'
+                          ? 'bg-white/[0.04] border-emerald-500/30 text-emerald-400'
+                          : 'bg-white/[0.02] border-white/5 text-white/40'
+                      }`}
+                    >
+                      <div className="flex justify-center mb-1.5">
+                        <Clock size={20} weight={bookingData.status === 'pending' ? 'fill' : 'regular'} />
+                      </div>
+                      <span className="block text-[11px] sm:text-xs font-bold leading-tight">
+                        1. Ожидает
+                      </span>
+                      <span className="text-[10px] text-white/50 hidden sm:block mt-0.5">
+                        {bookingData.status === 'pending' ? 'Готовится бокс' : 'Заезд назначен'}
+                      </span>
+                    </div>
+
+                    {/* Step 2: В боксе */}
+                    <div
+                      className={`p-3 rounded-xl border text-center transition-all ${
+                        bookingData.status === 'in_progress'
+                          ? 'bg-accent-blue/15 border-accent-blue/50 text-accent-blue ring-2 ring-accent-blue/30 shadow-lg'
+                          : bookingData.status === 'completed' || bookingData.status === 'done'
+                          ? 'bg-white/[0.04] border-emerald-500/30 text-emerald-400'
+                          : 'bg-white/[0.02] border-white/5 text-white/40'
+                      }`}
+                    >
+                      <div className="flex justify-center mb-1.5">
+                        <Drop
+                          size={20}
+                          weight={bookingData.status === 'in_progress' ? 'fill' : 'regular'}
+                          className={bookingData.status === 'in_progress' ? 'animate-bounce' : ''}
+                        />
+                      </div>
+                      <span className="block text-[11px] sm:text-xs font-bold leading-tight">
+                        2. Моется
+                      </span>
+                      <span className="text-[10px] text-white/50 hidden sm:block mt-0.5">
+                        {bookingData.status === 'in_progress' ? 'Активная мойка' : 'В процессе'}
+                      </span>
+                    </div>
+
+                    {/* Step 3: Готова */}
+                    <div
+                      className={`p-3 rounded-xl border text-center transition-all ${
+                        bookingData.status === 'completed' || bookingData.status === 'done'
+                          ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-400 ring-2 ring-emerald-500/30 shadow-lg'
+                          : 'bg-white/[0.02] border-white/5 text-white/40'
+                      }`}
+                    >
+                      <div className="flex justify-center mb-1.5">
+                        <Sparkle
+                          size={20}
+                          weight={bookingData.status === 'completed' || bookingData.status === 'done' ? 'fill' : 'regular'}
+                        />
+                      </div>
+                      <span className="block text-[11px] sm:text-xs font-bold leading-tight">
+                        3. Готова
+                      </span>
+                      <span className="text-[10px] text-white/50 hidden sm:block mt-0.5">
+                        {bookingData.status === 'completed' || bookingData.status === 'done' ? 'Можно забирать' : 'Выдача'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Contextual Status Banner Description */}
+                  <div className="text-xs text-white/80 bg-black/40 rounded-xl px-3.5 py-2.5 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5">
+                    <span>
+                      {bookingData.status === 'pending' &&
+                        `Ожидаем ваш автомобиль в ${bookingData.box_name} к ${bookingData.timeStr}. Мастера подготовят пост к заезду.`}
+                      {bookingData.status === 'in_progress' &&
+                        `Автомобиль заехал в ${bookingData.box_name}! Мастера уже выполняют комплексную мойку и сушку.`}
+                      {(bookingData.status === 'completed' || bookingData.status === 'done') &&
+                        'Автомобиль чист, просушен и готов к выдаче! Можете подходить к боксу.'}
+                    </span>
+                    <span className="text-[10px] text-white/40 shrink-0">
+                      Автообновление (10 сек) • {lastCheckTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Detailed Grid Info */}

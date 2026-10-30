@@ -81,7 +81,8 @@ export const SiteConfigSchema = z.object({
       login: 'admin',
       password: 'admin123',
     }),
-});
+  statusOverrides: z.record(z.string(), z.string()).optional().default({}),
+}).passthrough();
 
 export type SiteConfig = z.infer<typeof SiteConfigSchema>;
 export type CarCategoryId = 'sedan' | 'crossover' | 'suv';
@@ -220,4 +221,5 @@ export const defaultSiteConfig: SiteConfig = {
     login: 'admin',
     password: 'admin123',
   },
+  statusOverrides: {},
 };
