@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Questrial&family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Apple HIG Palette & OLED Dark Theme */
+  --apple-bg-base: #000000;
+  --apple-bg-card: #161618;
+  --apple-bg-elevated: #1C1C1E;
+  --apple-bg-surface: #242426;
+  --apple-bg-hover: #2C2C2E;
+
+  --apple-border-subtle: rgba(255, 255, 255, 0.08);
+  --apple-border-medium: rgba(255, 255, 255, 0.14);
+  --apple-border-accent: rgba(0, 199, 190, 0.5);
+
+  /* Primary Accent: Turquoise (Apple Teal / Mint) */
+  --apple-accent-turquoise: #00C7BE;
+  --apple-accent-turquoise-hover: #00B3AB;
+  --apple-accent-turquoise-subtle: rgba(0, 199, 190, 0.14);
+  --apple-accent-turquoise-glow: 0 0 20px -2px rgba(0, 199, 190, 0.5);
+
+  /* Legacy aliases mapped to Turquoise / dynamic accent */
+  --apple-accent-blue: #00C7BE;
+  --apple-accent-blue-hover: #00B3AB;
+  --apple-accent-blue-subtle: rgba(0, 199, 190, 0.14);
+  --apple-accent-blue-glow: 0 0 20px -2px rgba(0, 199, 190, 0.5);
+  --color-accent: #00C7BE;
+
+  --apple-text-primary: #F5F5F7;
+  --apple-text-secondary: #86868B;
+  --apple-text-tertiary: #A1A1A6;
+
+  --safe-area-bottom: env(safe-area-inset-bottom, 12px);
+  --font-sans: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Questrial', 'Montserrat', monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

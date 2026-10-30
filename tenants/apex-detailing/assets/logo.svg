@@ -1,0 +1,6 @@
+<svg width="240" height="48" viewBox="0 0 240 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 40L24 8L36 40H28L24 28L20 40H12Z" fill="#F5F5F7"/>
+  <path d="M24 8L32 28H16L24 8Z" fill="#00C7BE"/>
+  <text x="48" y="32" fill="#F5F5F7" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-weight="900" font-size="20" letter-spacing="2">APEX</text>
+  <text x="115" y="32" fill="#86868B" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-weight="600" font-size="14" letter-spacing="3">АВТОМОЙКА</text>
+</svg>

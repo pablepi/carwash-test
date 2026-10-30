@@ -1,0 +1,73 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, ::before, ::after {
+    font-family: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    background-color: #000000;
+    color: #F5F5F7;
+    font-family: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.01em;
+    color: #FFFFFF !important;
+  }
+
+  button, input, select, textarea, p, span, label, a {
+    font-family: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+}
+
+@layer components {
+  /* Apple HIG Card */
+  .astryx-card {
+    background-color: #161618;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .astryx-card:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  /* Liquid Glass Surface (Apple HIG Frosted Glass) */
+  .liquid-glass-surface {
+    background: linear-gradient(180deg, rgba(30, 30, 34, 0.82) 0%, rgba(18, 18, 20, 0.88) 100%);
+    backdrop-filter: blur(28px) saturate(190%) contrast(105%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(105%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.16);
+  }
+
+  /* Monospace Metrics Badge */
+  .astryx-badge {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1, "zero" 1;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    padding: 0.25rem 0.625rem;
+    border-radius: 8px;
+    background-color: #1C1C1E;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #F5F5F7;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+}
