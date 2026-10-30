@@ -97,23 +97,31 @@ export async function sendBookingToGoogleSheets(
   }
 }
 
+export interface FetchBookingsResult {
+  success: boolean;
+  bookings: RemoteBookingRecord[];
+  error?: string;
+  isOldDeployment?: boolean;
+}
+
 /**
- * Fetches all bookings from Google Sheets for the admin dashboard (Timeline and History).
- * Works across any device (phone, laptop, tablet).
+ * Fetches all bookings with rich status info (diagnosing old deployments, errors).
  */
-export async function fetchAllBookingsFromGoogleSheets(
+export async function fetchBookingsWithStatus(
   scriptUrl: string = DEFAULT_GOOGLE_SHEETS_URL
-): Promise<RemoteBookingRecord[]> {
+): Promise<FetchBookingsResult> {
   const url = scriptUrl?.trim() || DEFAULT_GOOGLE_SHEETS_URL;
   try {
     const res = await fetch(`${url}?action=getAllBookings`, {
       method: 'GET',
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      return { success: false, bookings: [], error: `Ошибка HTTP: ${res.status}` };
+    }
     const data = await res.json();
 
     if (data.status === 'success' && Array.isArray(data.bookings)) {
-      return data.bookings.map((b: any, idx: number) => {
+      const parsed: RemoteBookingRecord[] = data.bookings.map((b: any, idx: number) => {
         let cleanPhone = String(b.clientPhone || '').trim();
         if (cleanPhone.startsWith("'")) cleanPhone = cleanPhone.slice(1);
         if (cleanPhone.includes('#ERROR!')) cleanPhone = '';
@@ -139,25 +147,35 @@ export async function fetchAllBookingsFromGoogleSheets(
           createdAt: b.createdAt || '',
         };
       });
+      return { success: true, bookings: parsed };
     }
 
-    // Fallback: If script only supports ?date=, try fetching for today
-    if (data.status === 'error' && data.message?.includes('date')) {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const dateRes = await fetch(`${url}?date=${encodeURIComponent(todayStr)}`);
-      if (dateRes.ok) {
-        const dateData = await dateRes.json();
-        if (dateData.status === 'success' && Array.isArray(dateData.bookings)) {
-          return dateData.bookings;
-        }
-      }
+    if (data.status === 'error') {
+      const msg = String(data.message || '');
+      const isOld = msg.includes('date') || msg.includes('обязателен');
+      return {
+        success: false,
+        bookings: [],
+        error: msg || 'Ошибка ответа от Google Apps Script',
+        isOldDeployment: isOld,
+      };
     }
 
-    return [];
-  } catch (err) {
-    console.warn('Could not fetch all bookings from Google Sheets:', err);
-    return [];
+    return { success: false, bookings: [], error: 'Неизвестный формат ответа' };
+  } catch (err: any) {
+    return { success: false, bookings: [], error: err.message || 'Сетевая ошибка' };
   }
+}
+
+/**
+ * Fetches all bookings from Google Sheets for the admin dashboard (Timeline and History).
+ * Works across any device (phone, laptop, tablet).
+ */
+export async function fetchAllBookingsFromGoogleSheets(
+  scriptUrl: string = DEFAULT_GOOGLE_SHEETS_URL
+): Promise<RemoteBookingRecord[]> {
+  const res = await fetchBookingsWithStatus(scriptUrl);
+  return res.bookings;
 }
 
 /**

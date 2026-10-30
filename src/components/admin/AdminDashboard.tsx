@@ -27,6 +27,7 @@ import {
   CloudArrowUp,
   CloudArrowDown,
   SignOut,
+  Warning,
 } from '@phosphor-icons/react';
 import { Badge } from '../common/Badge';
 import { GlassButton } from '../common/GlassButton';
@@ -41,7 +42,7 @@ import {
 import {
   DEFAULT_GOOGLE_SHEETS_URL,
   testGoogleSheetsConnection,
-  fetchAllBookingsFromGoogleSheets,
+  fetchBookingsWithStatus,
   sendBookingToGoogleSheets,
   saveConfigToGoogleSheets,
   fetchConfigFromGoogleSheets,
@@ -439,16 +440,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   );
   const [isTestingSheets, setIsTestingSheets] = useState(false);
   const [sheetsTestResult, setSheetsTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [sheetsSyncStatus, setSheetsSyncStatus] = useState<{
+    error?: string;
+    isOldDeployment?: boolean;
+    lastSynced?: Date;
+  } | null>(null);
 
   const loadBookingsFromGoogle = useCallback(async () => {
     setIsLoadingRemote(true);
     try {
-      const list = await fetchAllBookingsFromGoogleSheets(googleSheetsUrlInput);
-      if (list && list.length > 0) {
-        setRemoteBookings(list);
+      const res = await fetchBookingsWithStatus(googleSheetsUrlInput);
+      if (res.success) {
+        setRemoteBookings(res.bookings);
+        setSheetsSyncStatus({ lastSynced: new Date() });
+      } else {
+        setSheetsSyncStatus({
+          error: res.error,
+          isOldDeployment: res.isOldDeployment,
+        });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Failed to load remote bookings:', e);
+      setSheetsSyncStatus({ error: e.message || 'Ошибка сети' });
     } finally {
       setIsLoadingRemote(false);
     }
@@ -1244,6 +1257,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             )}
           </div>
         </div>
+
+        {/* Old Deployment Warning Banner */}
+        {sheetsSyncStatus?.isOldDeployment && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200">
+            <div className="flex items-start gap-3">
+              <Warning size={22} className="text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-xs space-y-1.5 flex-1">
+                <div className="font-bold text-amber-300 text-sm">
+                  В Google Apps Script всё ещё работает старая версия развертывания!
+                </div>
+                <div>
+                  Бронирования с сайта успешно попадают в Google Таблицу, но <b>не могут передаться обратно на ноутбук</b>,
+                  так как старый скрипт возвращает ошибку: <code>«Параметр 'date' обязателен»</code>.
+                </div>
+                <div className="pt-1 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-semibold transition-colors"
+                  >
+                    Посмотреть инструкцию и код скрипта во вкладке «Настройки» →
+                  </button>
+                  <button
+                    onClick={loadBookingsFromGoogle}
+                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition-colors"
+                  >
+                    Проверить снова
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* TAB 1: TIMELINE & CURRENT BOOKINGS */}
         {activeTab === 'timeline' && (
