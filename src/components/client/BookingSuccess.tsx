@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { CheckCircle, Calendar, Bell, ShareNetwork, Clock, ArrowLeft } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, Calendar, Bell, ShareNetwork, Clock, ArrowLeft, Ticket } from '@phosphor-icons/react';
 import { generateIcsFile, downloadIcsFile } from '@/lib/ics';
 import { TenantConfig } from '@/types/tenant';
 import { GlassButton } from '../common/GlassButton';
@@ -14,6 +15,7 @@ interface BookingSuccessProps {
 }
 
 export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant, onReset }) => {
+  const navigate = useNavigate();
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -36,6 +38,16 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
   const carModel = booking?.car_model || booking?.carModel || 'Автомобиль';
   const totalPrice = Number(booking?.total_price ?? booking?.servicePrice ?? 0);
 
+  // Extract plate number for fail-safe cross-device deep linking
+  const rawPlate = booking?.carPlate || booking?.plate_number || '';
+  const matchPlate = rawPlate || (booking?.carModel || booking?.car_model || '').match(/\[(.*?)\]/)?.[1] || '';
+  const cleanPlate = matchPlate.replace(/[^A-Za-zА-Яа-я0-9]/g, '').toUpperCase();
+
+  const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  const plateQuery = cleanPlate ? `&plate=${encodeURIComponent(cleanPlate)}` : '';
+  const bookingPageRelPath = `/s/${tenant.slug}/my-booking?token=${encodeURIComponent(bookingNumber)}${plateQuery}`;
+  const fullBookingUrl = `${window.location.origin}${basePath}${bookingPageRelPath}`;
+
   // Handle ICS download
   const handleDownloadCalendar = () => {
     try {
@@ -43,7 +55,7 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
       const endTimeIso = booking?.end_time || booking?.endTimeIso || new Date(validStart.getTime() + 60 * 60 * 1000).toISOString();
       const ics = generateIcsFile({
         title: `${serviceTitle} | ${tenant.name}`,
-        description: `Авто: ${carModel}\\nСумма: ${totalPrice} ₽\\nКод отмены: ${bookingNumber}`,
+        description: `Авто: ${carModel}\nСумма: ${totalPrice} ₽\nКод отмены: ${bookingNumber}`,
         location: tenant.address,
         startTimeIso,
         endTimeIso,
@@ -71,11 +83,14 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
 
   // Copy booking direct link
   const handleCopyLink = () => {
-    const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-    const url = `${window.location.origin}${basePath}/s/${tenant.slug}/my-booking?token=${encodeURIComponent(bookingNumber)}`;
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(fullBookingUrl);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  // Navigate directly to booking details page
+  const handleGoToBooking = () => {
+    navigate(bookingPageRelPath);
   };
 
   return (
@@ -160,10 +175,20 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
           <span className="text-text-primary font-medium">до 2 часов до заезда</span>
         </div>
 
-        {/* Action Buttons: Calendar & Push */}
+        {/* Action Buttons: View booking, Calendar, Copy Link */}
         <div className="space-y-3">
           <GlassButton
             variant="primary"
+            fullWidth
+            onClick={handleGoToBooking}
+            icon={<Ticket size={18} weight="bold" />}
+            className="font-bold text-white shadow-lg"
+          >
+            Посмотреть мою запись
+          </GlassButton>
+
+          <GlassButton
+            variant="ghost"
             fullWidth
             onClick={handleDownloadCalendar}
             icon={<Calendar size={18} weight="bold" />}

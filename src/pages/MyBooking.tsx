@@ -30,8 +30,10 @@ export const MyBooking: React.FC = () => {
   const currentSlug = tenantSlug || slugify(tenant.name || 'carwash');
 
   const tokenFromUrl = searchParams.get('token');
-  const [searchTab, setSearchTab] = useState<'plate' | 'token'>(tokenFromUrl ? 'token' : 'plate');
-  const [inputValue, setInputValue] = useState(tokenFromUrl || '');
+  const plateFromUrl = searchParams.get('plate');
+
+  const [searchTab, setSearchTab] = useState<'plate' | 'token'>(plateFromUrl ? 'plate' : 'token');
+  const [inputValue, setInputValue] = useState(tokenFromUrl || plateFromUrl || '');
   const [bookingData, setBookingData] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -42,41 +44,53 @@ export const MyBooking: React.FC = () => {
 
   // Search booking across local storage and remote Google Sheets
   const lookupBooking = useCallback(
-    async (query: string) => {
-      const q = query.trim().toUpperCase();
-      if (!q) return;
+    async (primaryQuery: string, secondaryPlate?: string) => {
+      const q1 = (primaryQuery || '').trim().toUpperCase();
+      const q2 = (secondaryPlate || '').trim().toUpperCase();
+      if (!q1 && !q2) return;
 
       setIsLoading(true);
       setNotFound(false);
       setCancelSuccessMsg(null);
 
-      const cleanQ = q.replace(/\s+/g, '');
-      const cleanQDigits = q.replace(/\D/g, '');
+      const cleanQ1 = q1.replace(/\s+/g, '');
+      const cleanQ1Digits = q1.replace(/\D/g, '');
+      const cleanQ2 = q2.replace(/\s+/g, '');
+
+      // Helper matcher for any booking object
+      const matchesQuery = (b: any) => {
+        const token = String(
+          b.booking_number || b.cancellation_token || b.token || b.id || ''
+        )
+          .toUpperCase()
+          .trim();
+        const car = String(b.car_model || b.carModel || '')
+          .toUpperCase()
+          .replace(/\s+/g, '');
+        const plate = String(b.carPlate || b.plate_number || '')
+          .toUpperCase()
+          .replace(/\s+/g, '');
+        const phone = String(b.client_phone || b.clientPhone || '').replace(/\D/g, '');
+
+        // 1. Match primary query
+        if (q1) {
+          if (token && !token.startsWith('БОКС') && (token === q1 || token.includes(q1) || q1.includes(token))) return true;
+          if (car.includes(cleanQ1) || (plate && cleanQ1.includes(plate))) return true;
+          if (cleanQ1Digits.length >= 6 && phone.includes(cleanQ1Digits)) return true;
+        }
+
+        // 2. Match secondary plate query
+        if (cleanQ2) {
+          if (car.includes(cleanQ2) || (plate && plate.includes(cleanQ2))) return true;
+        }
+
+        return false;
+      };
 
       // 1. First search in local storage history
       try {
         const stored: any[] = JSON.parse(localStorage.getItem('apex_bookings_history') || '[]');
-        const localFound = stored.find((b) => {
-          const token = (
-            b.booking_number ||
-            b.cancellation_token ||
-            b.token ||
-            b.id ||
-            ''
-          )
-            .toUpperCase()
-            .trim();
-          if (token && (token === q || token.includes(q) || q.includes(token))) return true;
-
-          const car = (b.car_model || b.carModel || '').toUpperCase().replace(/\s+/g, '');
-          const plate = (b.carPlate || b.plate_number || '').toUpperCase().replace(/\s+/g, '');
-          if (car.includes(cleanQ) || (plate && cleanQ.includes(plate))) return true;
-
-          const phone = (b.client_phone || b.clientPhone || '').replace(/\D/g, '');
-          if (cleanQDigits.length >= 7 && phone.includes(cleanQDigits)) return true;
-
-          return false;
-        });
+        const localFound = stored.find(matchesQuery);
 
         if (localFound) {
           setBookingData({
@@ -114,20 +128,7 @@ export const MyBooking: React.FC = () => {
       try {
         const res = await fetchBookingsWithStatus(googleSheetsUrl);
         if (res.success && Array.isArray(res.bookings) && res.bookings.length > 0) {
-          const remoteFound = res.bookings.find((b) => {
-            const num = (b.booking_number || b.id || '').toUpperCase().trim();
-            if (num && !num.startsWith('БОКС') && (num === q || num.includes(q) || q.includes(num))) {
-              return true;
-            }
-
-            const car = (b.carModel || '').toUpperCase().replace(/\s+/g, '');
-            if (car.includes(cleanQ)) return true;
-
-            const phone = (b.clientPhone || '').replace(/\D/g, '');
-            if (cleanQDigits.length >= 7 && phone.includes(cleanQDigits)) return true;
-
-            return false;
-          });
+          const remoteFound = res.bookings.find(matchesQuery);
 
           if (remoteFound) {
             let cleanTitle = remoteFound.serviceTitle || 'Комплекс мойки';
@@ -166,14 +167,47 @@ export const MyBooking: React.FC = () => {
     [googleSheetsUrl, tenant.address]
   );
 
-  // Auto-search if token is present in URL
+  // Auto-search if token or plate is in URL, otherwise auto-load latest booking on current device
   useEffect(() => {
-    if (tokenFromUrl) {
-      setSearchTab('token');
-      setInputValue(tokenFromUrl);
-      lookupBooking(tokenFromUrl);
+    if (tokenFromUrl || plateFromUrl) {
+      if (tokenFromUrl) setSearchTab('token');
+      else if (plateFromUrl) setSearchTab('plate');
+      setInputValue(tokenFromUrl || plateFromUrl || '');
+      lookupBooking(tokenFromUrl || '', plateFromUrl || '');
+    } else {
+      // Auto-load latest booking for the user on this device so they immediately see their visit
+      try {
+        const stored: any[] = JSON.parse(localStorage.getItem('apex_bookings_history') || '[]');
+        if (stored.length > 0) {
+          const latest = stored[0];
+          setBookingData({
+            id: latest.id || latest.booking_number,
+            booking_number:
+              latest.booking_number ||
+              latest.token ||
+              latest.cancellation_token ||
+              latest.id,
+            client_name: latest.client_name || latest.clientName || 'Гость',
+            client_phone: latest.client_phone || latest.clientPhone || '',
+            car_model: latest.car_model || latest.carModel || 'Автомобиль',
+            service_title: latest.service_title || latest.serviceTitle || 'Комплекс мойки',
+            timeStr:
+              latest.timeStr ||
+              (latest.start_time && !latest.start_time.includes('T')
+                ? latest.start_time
+                : '12:00'),
+            date: latest.date || 'Сегодня',
+            total_price:
+              latest.total_price || latest.servicePrice || latest.totalPrice || 0,
+            box_name: latest.box_name || latest.boxName || 'Бокс 1',
+            status: latest.status || 'pending',
+            address: latest.address || tenant.address,
+            source: 'local',
+          });
+        }
+      } catch (e) {}
     }
-  }, [tokenFromUrl, lookupBooking]);
+  }, [tokenFromUrl, plateFromUrl, lookupBooking, tenant.address]);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -299,9 +333,7 @@ export const MyBooking: React.FC = () => {
                       setInputValue(searchTab === 'plate' ? val.toUpperCase() : val);
                       setNotFound(false);
                     }}
-                    className={`w-full bg-[#1C1C1E] border border-white/15 rounded-2xl px-4 py-3.5 pl-11 text-sm sm:text-base text-white placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue transition-colors font-bold ${
-                      searchTab === 'plate' ? 'uppercase tracking-wider' : 'uppercase tracking-wider'
-                    }`}
+                    className="w-full bg-[#1C1C1E] border border-white/15 rounded-2xl px-4 py-3.5 pl-11 text-sm sm:text-base text-white placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue transition-colors font-bold uppercase tracking-wider"
                   />
                   {searchTab === 'plate' ? (
                     <Car size={18} className="absolute left-4 top-4 text-[#86868B]" />
@@ -456,10 +488,12 @@ export const MyBooking: React.FC = () => {
                   setBookingData(null);
                   setNotFound(false);
                   setCancelSuccessMsg(null);
+                  setInputValue('');
+                  navigate(`/s/${currentSlug}/my-booking`, { replace: true });
                 }}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] text-xs font-semibold text-white transition-colors"
               >
-                ← Искать другую запись
+                ← Искать по другому номеру или авто
               </button>
 
               {bookingData.status !== 'cancelled' && (
