@@ -95,7 +95,7 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
 
   return (
     <div className="mx-auto max-w-xl px-4 py-8 animate-fade-in-up">
-      <div className="astryx-card p-6 sm:p-8 bg-base-elevated border border-white/10 shadow-car-lacquer text-center">
+      <div className="astryx-card p-6 sm:p-8 bg-[#141416] border border-white/10 text-center">
         {/* Success Icon */}
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
           <CheckCircle size={36} weight="fill" />
@@ -106,17 +106,17 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
         <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-3 mb-1">
           Ждём вас на мойку
         </h2>
-        <p className="text-xs text-[#A1A1A6] max-w-md mx-auto mb-4 leading-relaxed">
+        <p className="text-xs text-[#A1A1A8] max-w-md mx-auto mb-4 leading-relaxed">
           Бронь зафиксирована в системе. Заезд строго к выбранному времени без очереди и ожидания.
         </p>
 
         {/* Индивидуальный номер записи */}
-        <div className="mx-auto max-w-sm mb-6 p-4 rounded-2xl bg-white/[0.06] border border-white/15 flex items-center justify-between">
+        <div className="mx-auto max-w-sm mb-6 p-4 rounded-2xl bg-[#1C1C20] border border-white/10 flex items-center justify-between">
           <div className="text-left">
-            <span className="block text-[10px] uppercase tracking-wider text-[#A1A1A6] font-semibold">
+            <span className="block text-xs text-[#A1A1A8] font-medium">
               Номер записи
             </span>
-            <span className="text-xl sm:text-2xl font-extrabold text-white tracking-wider font-mono">
+            <span className="text-xl sm:text-2xl font-extrabold text-white tracking-wider font-sans">
               {bookingNumber}
             </span>
           </div>
@@ -126,53 +126,53 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
               setCopiedLink(true);
               setTimeout(() => setCopiedLink(false), 2000);
             }}
-            className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white transition-all duration-100 ease-out active:scale-[0.96]"
+            className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white transition-transform duration-100 ease-out active:scale-[0.96]"
           >
             {copiedLink ? 'Скопировано!' : 'Скопировать'}
           </button>
         </div>
 
         {/* Booking Card Spec */}
-        <div className="astryx-card p-5 bg-base-surface text-left border border-white/5 space-y-3 mb-6">
-          <div className="flex items-center justify-between pb-3 border-b border-white/5">
-            <span className="text-xs font-mono text-text-secondary">Услуга:</span>
-            <span className="text-sm font-bold text-text-primary text-right">{serviceTitle}</span>
+        <div className="p-5 bg-[#1C1C20] text-left rounded-2xl space-y-2.5 mb-6">
+          <div className="flex items-center justify-between py-1">
+            <span className="text-xs text-[#A1A1A8]">Услуга:</span>
+            <span className="text-sm font-bold text-white text-right">{serviceTitle}</span>
           </div>
 
-          <div className="flex items-center justify-between pb-3 border-b border-white/5">
-            <span className="text-xs font-mono text-[#F5F5F7]">Дата и время:</span>
-            <span className="text-sm font-mono font-bold text-accent-blue tabular-nums">
+          <div className="flex items-center justify-between py-1">
+            <span className="text-xs text-[#A1A1A8]">Дата и время:</span>
+            <span className="text-sm font-sans font-bold text-accent-blue tabular-nums">
               {dateFormatted}, {timeFormatted}
             </span>
           </div>
 
-          <div className="flex items-center justify-between pb-3 border-b border-white/5">
-            <span className="text-xs font-mono text-[#F5F5F7]">Автомобиль:</span>
-            <span className="text-sm font-mono text-[#F5F5F7] font-semibold">{carModel}</span>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-xs text-[#A1A1A8]">Автомобиль:</span>
+            <span className="text-sm font-sans text-white font-semibold">{carModel}</span>
           </div>
 
-          <div className="flex items-center justify-between pb-3 border-b border-white/5">
-            <span className="text-xs font-mono text-[#F5F5F7]">Локация:</span>
-            <span className="text-xs text-[#F5F5F7] text-right max-w-[240px] truncate">{tenant.address}</span>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-xs text-[#A1A1A8]">Локация:</span>
+            <span className="text-xs text-white text-right max-w-[240px] truncate">{tenant.address}</span>
           </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-xs uppercase tracking-wider font-semibold text-[#F5F5F7]">
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs font-semibold text-white">
               Сумма к оплате:
             </span>
-            <span className="text-xl font-bold text-white tracking-wide tabular-nums">
+            <span className="text-xl font-bold text-white tracking-wide tabular-nums font-sans">
               {totalPrice.toLocaleString('ru-RU')} ₽
             </span>
           </div>
         </div>
 
         {/* Cancellation Notice Timer */}
-        <div className="p-3 rounded-xl bg-base-darkest border border-white/5 flex items-center justify-between text-xs font-mono text-text-secondary mb-6">
+        <div className="p-3 rounded-xl bg-[#0A0A0C] border border-white/5 flex items-center justify-between text-xs text-[#A1A1A8] mb-6">
           <div className="flex items-center gap-2">
             <Clock size={16} className="text-amber-400" />
             <span>Бесплатная отмена:</span>
           </div>
-          <span className="text-text-primary font-medium">до 2 часов до заезда</span>
+          <span className="text-white font-medium">до 2 часов до заезда</span>
         </div>
 
         {/* Action Buttons: View booking, Calendar, Copy Link */}
@@ -182,7 +182,7 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
             fullWidth
             onClick={handleGoToBooking}
             icon={<Ticket size={18} weight="bold" />}
-            className="font-bold text-white shadow-lg"
+            className="font-bold text-black"
           >
             Посмотреть мою запись
           </GlassButton>
@@ -218,7 +218,7 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
 
         <button
           onClick={onReset}
-          className="mt-6 inline-flex items-center gap-1.5 text-xs font-mono text-text-tertiary hover:text-text-primary transition-colors"
+          className="mt-6 inline-flex items-center gap-1.5 text-xs font-sans font-medium text-[#A1A1A8] hover:text-white transition-colors"
         >
           <ArrowLeft size={14} /> Вернуться на главную
         </button>

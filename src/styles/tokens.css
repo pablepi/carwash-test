@@ -1,38 +1,27 @@
 :root {
-  /* Apple HIG Palette & OLED Dark Materials */
-  --apple-bg-base: #000000;
-  --apple-bg-card: #141416;
-  --apple-bg-elevated: #1C1C1E;
-  --apple-bg-surface: #242426;
-  --apple-bg-hover: #2C2C2E;
+  /* Taste-Skill House Style: Refined Dark Tone Steps */
+  --ground: #0a0a0c;
+  --surface: #141416;
+  --surface-raised: #1c1c20;
+  --surface-hover: #26262a;
 
-  --apple-border-subtle: rgba(255, 255, 255, 0.08);
-  --apple-border-medium: rgba(255, 255, 255, 0.14);
-  --apple-border-specular: rgba(255, 255, 255, 0.18);
-  --apple-border-accent: rgba(0, 199, 190, 0.5);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.14);
 
-  /* Primary Accent: Apple Teal / Cyan */
-  --apple-accent-turquoise: #00C7BE;
-  --apple-accent-turquoise-hover: #00B3AB;
-  --apple-accent-turquoise-subtle: rgba(0, 199, 190, 0.14);
-  --apple-accent-turquoise-glow: 0 0 24px -2px rgba(0, 199, 190, 0.45);
-
-  /* Aliases for consistency */
+  /* Primary Accent: Flat Crisp Turquoise (No Neon Glows) */
   --apple-accent-blue: #00C7BE;
   --apple-accent-blue-hover: #00B3AB;
-  --apple-accent-blue-subtle: rgba(0, 199, 190, 0.14);
-  --apple-accent-blue-glow: 0 0 24px -2px rgba(0, 199, 190, 0.45);
   --color-accent: #00C7BE;
 
   --apple-text-primary: #FFFFFF;
-  --apple-text-secondary: #86868B;
-  --apple-text-tertiary: #A1A1A6;
+  --apple-text-secondary: #A1A1A8;
+  --apple-text-tertiary: #86868B;
 
   --safe-area-bottom: env(safe-area-inset-bottom, 12px);
 
-  /* Authentic Apple System Font Stack with optical tracking */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  /* Authentic System Font Stack with optical tracking */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace; /* taste-skill-ignore */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -41,13 +30,5 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .liquid-glass-surface, .astryx-card {
-    background-color: #141416 !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
   }
 }

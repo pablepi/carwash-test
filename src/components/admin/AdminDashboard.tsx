@@ -372,7 +372,7 @@ const PRESET_COLORS = [
   { name: 'Изумрудный (Emerald)', hex: '#10B981' },
   { name: 'Огненный титан (Orange)', hex: '#F97316' },
   { name: 'Рубиновый спорт (Red)', hex: '#EF4444' },
-  { name: 'Королевский фиолетовый', hex: '#8B5CF6' },
+  { name: 'Графитовый хром', hex: '#8E8E93' },
 ];
 
 const PRESET_HERO_PHOTOS = [
@@ -1301,7 +1301,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const totalCount = activeBookings.length;
 
   return (
-    <div className="min-h-screen bg-base-darkest text-text-primary pb-28 pt-4 sm:pt-6 font-sans overflow-x-hidden w-full max-w-full">
+    <div data-ui="admin-dashboard" className="min-h-[100dvh] bg-base-darkest text-text-primary pb-28 pt-4 sm:pt-6 font-sans overflow-x-hidden w-full max-w-full">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-[#1C1C1E] border border-white/20 px-4 py-3 shadow-2xl backdrop-blur-md animate-fade-in-up">
@@ -2013,7 +2013,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               {/* 1. Working Hours (Time available for booking) */}
               <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-3 min-w-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs uppercase tracking-wider text-[#A1A1A6] font-mono font-semibold flex items-center gap-1.5 min-w-0">
+                  <span className="text-xs text-[#A1A1A8] font-semibold flex items-center gap-1.5 min-w-0">
                     <Clock size={14} className="text-accent-blue shrink-0" />
                     <span>Время, свободное для онлайн-записи</span>
                   </span>
@@ -2072,7 +2072,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-3 min-w-0">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <span className="block text-xs uppercase tracking-wider text-[#A1A1A6] font-mono font-semibold">
+                    <span className="block text-xs text-[#A1A1A8] font-semibold">
                       Технический перерыв (буфер между машинами)
                     </span>
                     <span className="text-[11px] text-[#86868B] block mt-0.5">
@@ -2106,7 +2106,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-3 min-w-0">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <span className="block text-xs uppercase tracking-wider text-[#A1A1A6] font-mono font-semibold">
+                    <span className="block text-xs text-[#A1A1A8] font-semibold">
                       Шаг сетки времени записи
                     </span>
                     <span className="text-[11px] text-[#86868B] block mt-0.5">
@@ -2139,7 +2139,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               {/* 4. Boxes Count */}
               <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <span className="block text-xs uppercase tracking-wider text-[#A1A1A6] font-mono font-semibold">
+                  <span className="block text-xs text-[#A1A1A8] font-semibold">
                     Количество постов (боксов мойки)
                   </span>
                   <span className="text-[11px] text-[#86868B]">
@@ -2222,7 +2222,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
                         className="h-28 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
                         style={{ backgroundImage: `url('${ph.url}')` }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" /> {/* taste-skill-ignore */}
                       </div>
                       <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
                         <span className="text-xs font-semibold text-white truncate drop-shadow">
@@ -2618,7 +2618,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
                       <div className="sm:col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
                         <div className="text-[11px] text-[#86868B]">
                           {isCredsCustom ? (
-                            <span className="text-emerald-400 font-medium">✓ Используется измененный пароль</span>
+                            <span className="text-emerald-400 font-medium">Активен измененный пароль</span>
                           ) : (
                             <span>Используются стандартные логин и пароль</span>
                           )}

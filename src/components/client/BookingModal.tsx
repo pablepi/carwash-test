@@ -206,16 +206,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 p-0 sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="astryx-card w-full max-w-lg bg-[#141416]/95 border border-white/10 shadow-2xl p-5 sm:p-6 relative rounded-t-[28px] sm:rounded-3xl max-h-[92vh] overflow-y-auto backdrop-blur-2xl">
+      <div className="astryx-card w-full max-w-lg bg-[#141416] border border-white/10 p-5 sm:p-6 relative rounded-t-[28px] sm:rounded-3xl max-h-[92vh] overflow-y-auto">
         {/* Header Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-[#86868B] hover:text-white p-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] transition-all active:scale-90 z-20"
+          className="absolute top-4 right-4 text-[#86868B] hover:text-white p-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] transition-colors active:scale-90 z-20"
         >
           <X size={18} />
         </button>
@@ -227,7 +227,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-[-0.025em] mt-2">
             Выбор времени и заезд
           </h3>
-          <p className="text-xs text-[#A1A1A6] mt-0.5 leading-relaxed font-normal">
+          <p className="text-xs text-[#A1A1A8] mt-0.5 leading-relaxed font-normal">
             Запись в бокс без предоплаты. Оплата на месте после выполнения мойки.
           </p>
         </div>
@@ -242,7 +242,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Car Category Switcher inside Modal */}
           <div>
-            <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
+            <label className="block text-xs text-white mb-1.5 font-medium">
               Категория авто
             </label>
             <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#1C1C1E] border border-white/[0.08] rounded-xl">
@@ -253,13 +253,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     key={cat.id}
                     type="button"
                     onClick={() => setSelectedCarCategory(cat.id as CarCategoryId)}
-                    className={`py-2 px-1 text-center rounded-lg text-xs font-semibold transition-all select-none flex items-center justify-center gap-1 ${
+                    className={`py-2 px-1 text-center rounded-lg text-xs font-semibold transition-transform duration-100 ease-out select-none flex items-center justify-center gap-1 active:scale-[0.97] ${
                       isSelected
-                        ? 'bg-accent-blue text-white shadow-sm'
+                        ? 'bg-accent-blue text-black font-bold'
                         : 'text-[#86868B] hover:text-white'
                     }`}
                   >
-                    {isSelected && <Check size={11} weight="bold" />}
+                    {isSelected && <Check size={11} weight="bold" className="text-black" />}
                     <span>{cat.name}</span>
                   </button>
                 );
@@ -269,14 +269,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Service Selector */}
           <div>
-            <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
+            <label className="block text-xs text-white mb-1.5 font-medium">
               Услуга
             </label>
             <div className="relative">
               <select
                 value={selectedServiceId}
                 onChange={(e) => setSelectedServiceId(e.target.value)}
-                className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-[#F5F5F7] focus:outline-none focus:border-accent-blue appearance-none"
+                className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-accent-blue appearance-none"
               >
                 {config.services.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -306,9 +306,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           </div>
 
           {selectedSlotTimeStr && (
-            <div className="flex items-center justify-between text-xs font-mono px-1">
-              <span className="text-[#A1A1A6]">Выбранное время:</span>
-              <span className="font-bold text-accent-blue bg-accent-blue-subtle px-2.5 py-0.5 rounded-md border border-accent-blue/30">
+            <div className="flex items-center justify-between text-xs px-1">
+              <span className="text-[#A1A1A8]">Выбранное время:</span>
+              <span className="font-bold text-accent-blue bg-accent-blue/15 px-2.5 py-0.5 rounded-md border border-accent-blue/30 tabular-nums">
                 {selectedSlotTimeStr}
               </span>
             </div>
@@ -317,7 +317,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* Customer & Car Info */}
           <div className="space-y-3 pt-1">
             <div>
-              <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+              <label className="block text-xs text-white mb-1 font-medium">
                 Ваше имя
               </label>
               <div className="relative">
@@ -328,13 +328,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   placeholder="Александр"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+              <label className="block text-xs text-white mb-1 font-medium">
                 Номер телефона
               </label>
               <div className="relative">
@@ -345,14 +345,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   placeholder="+7 (999) 000-00-00"
                   value={phone}
                   onChange={handlePhoneChange}
-                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-mono text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-sans tabular-nums text-white placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+                <label className="block text-xs text-white mb-1 font-medium">
                   Марка и модель авто
                 </label>
                 <div className="relative">
@@ -363,13 +363,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     placeholder="BMW 5 / Camry"
                     value={carModel}
                     onChange={(e) => setCarModel(e.target.value)}
-                    className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                    className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+                <label className="block text-xs text-white mb-1 font-medium">
                   Госномер (необязательно)
                 </label>
                 <input
@@ -377,7 +377,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   placeholder="А777АА 777"
                   value={carPlate}
                   onChange={(e) => setCarPlate(e.target.value)}
-                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm font-mono uppercase text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm font-sans uppercase text-white placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                 />
               </div>
             </div>
@@ -386,8 +386,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* Pricing Summary */}
           <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between">
             <div>
-              <span className="block text-[10px] font-mono text-[#86868B] uppercase">К оплате при заезде:</span>
-              <span className="text-xl font-bold font-mono text-[#FFFFFF]">
+              <span className="block text-xs text-[#86868B]">К оплате при заезде:</span>
+              <span className="text-xl font-bold font-sans text-white tabular-nums">
                 {activePrice.toLocaleString('ru-RU')} ₽
               </span>
             </div>
@@ -397,7 +397,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               variant="primary"
               size="md"
               disabled={isSubmitting}
-              className="font-bold text-white shadow-lg"
+              className="font-bold text-black"
             >
               {isSubmitting ? 'Бронирование...' : 'Подтвердить запись'}
             </GlassButton>

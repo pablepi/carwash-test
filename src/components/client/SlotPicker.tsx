@@ -128,16 +128,13 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
     <div className={isCompact ? '' : 'mx-auto max-w-5xl px-3 sm:px-6 mb-16 scroll-mt-6'}>
       {!isCompact && (
         <div className="mb-5">
-          <span className="text-[12px] uppercase tracking-wide text-accent-blue font-bold">
-            Расписание
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-[#F5F5F7] tracking-tight mt-0.5">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
             Запись на мойку
           </h2>
-          <p className="text-xs text-[#A1A1A6] mt-1">
+          <p className="text-xs text-[#A1A1A8] mt-1">
             {selectedService ? (
               <span>
-                <strong className="text-[#F5F5F7]">{selectedService.title}</strong> · {selectedService.durationMinutes} мин + {tenant.bufferMinutes} мин буфер
+                <strong className="text-white">{selectedService.title}</strong> · {selectedService.durationMinutes} мин + {tenant.bufferMinutes} мин буфер
               </span>
             ) : (
               <span className="text-[#FF9F0A] flex items-center gap-1 font-medium">
@@ -152,7 +149,7 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
         {/* Calendar strip */}
         <div>
           <div className="flex items-center justify-between mb-2.5">
-            <span className="text-[11px] text-[#A1A1A6] uppercase tracking-wider font-semibold">
+            <span className="text-xs text-[#A1A1A8] font-medium">
               Дата заезда
             </span>
             <span className="text-xs text-white capitalize font-semibold tracking-wide">
@@ -172,16 +169,16 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
                   type="button"
                   key={d.toISOString()}
                   onClick={() => setSelectedDate(d)}
-                  className={`flex flex-col items-center justify-center min-w-[54px] py-2.5 px-2 rounded-2xl transition-all duration-100 ease-out active:scale-[0.96] border shrink-0 ${
+                  className={`flex flex-col items-center justify-center min-w-[54px] py-2.5 px-2 rounded-2xl transition-transform duration-100 ease-out active:scale-[0.96] border shrink-0 ${
                     isSelected
-                      ? 'bg-accent-blue text-white border-accent-blue shadow-[0_2px_12px_rgba(0,199,190,0.35)] font-bold'
-                      : 'bg-[#1C1C1E] text-white border-white/10 hover:border-white/20 hover:bg-[#252528]'
+                      ? 'bg-accent-blue text-black border-accent-blue font-bold'
+                      : 'bg-[#18181B] text-white border-white/10 hover:border-white/20 hover:bg-[#202024]'
                   }`}
                 >
-                  <span className={`text-[11px] uppercase tracking-wider font-semibold ${isSelected ? 'text-white' : 'text-white/60'}`}>
+                  <span className={`text-xs font-semibold ${isSelected ? 'text-black font-bold' : 'text-white/60'}`}>
                     {dayName}
                   </span>
-                  <span className="text-base font-bold text-white tabular-nums mt-0.5">
+                  <span className="text-base font-bold tabular-nums mt-0.5">
                     {dayNum}
                   </span>
                 </button>
@@ -193,10 +190,10 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
         {/* Slot grid */}
         <div>
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-            <span className="text-[11px] text-[#A1A1A6] uppercase tracking-wider font-semibold">
+            <span className="text-xs text-[#A1A1A8] font-medium">
               Свободные слоты
             </span>
-            <div className="flex items-center gap-2.5 text-[11px] text-[#A1A1A6]">
+            <div className="flex items-center gap-2.5 text-xs text-[#A1A1A8]">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#2C2C2E] border border-white/20" /> Свободно
               </span>
@@ -222,17 +219,17 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
                     key={slot.timeStr}
                     disabled={isDisabled}
                     onClick={() => onSlotSelected(slot.dateTimeIso, slot.timeStr, targetDateStr, slot.boxName)}
-                    className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border text-sm font-semibold transition-all duration-100 ease-out tabular-nums ${
+                    className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border text-sm font-semibold transition-transform duration-100 ease-out tabular-nums ${
                       isSelected
-                        ? 'bg-accent-blue text-white border-accent-blue shadow-[0_2px_12px_rgba(0,199,190,0.35)] font-bold ring-2 ring-accent-blue/30 active:scale-[0.96]'
+                        ? 'bg-accent-blue text-black border-accent-blue font-bold ring-2 ring-accent-blue active:scale-[0.96]'
                         : isDisabled
                         ? 'bg-black/40 text-[#48484A] border-white/[0.04] cursor-not-allowed line-through opacity-40'
-                        : 'bg-[#1C1C1E] text-white border-white/10 hover:border-accent-blue/50 hover:bg-[#252528] active:scale-[0.96]'
+                        : 'bg-[#18181B] text-white border-white/10 hover:border-accent-blue/50 hover:bg-[#202024] active:scale-[0.96]'
                     }`}
                   >
                     <span className="tracking-tight">{slot.timeStr}</span>
                     {slot.isAvailable && slot.boxName && (
-                      <span className={`text-[10px] mt-0.5 font-normal ${isSelected ? 'text-white/90 font-medium' : 'text-[#86868B]'}`}>
+                      <span className={`text-[10px] mt-0.5 font-normal ${isSelected ? 'text-black/80 font-medium' : 'text-[#86868B]'}`}>
                         {slot.boxName}
                       </span>
                     )}

@@ -12,10 +12,9 @@
   }
 
   body {
-    background-color: #000000;
-    color: #F5F5F7;
+    background-color: var(--ground, #0a0a0c);
+    color: #FFFFFF;
     font-family: var(--font-sans);
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     overflow-x: hidden;
     margin: 0;
     padding: 0;
@@ -23,19 +22,19 @@
     letter-spacing: -0.005em;
   }
 
-  /* Optical Sizing & Tracking: Large display text wants negative tracking, tight leading */
+  /* Headlines: two lines or fewer at every width, tight leading, negative tracking */
   h1, .display-title {
     font-family: var(--font-sans);
-    letter-spacing: -0.028em;
-    line-height: 1.1;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
     font-weight: 800;
     color: #FFFFFF !important;
   }
 
   h2 {
     font-family: var(--font-sans);
-    letter-spacing: -0.022em;
-    line-height: 1.2;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
     font-weight: 700;
     color: #FFFFFF !important;
   }
@@ -48,14 +47,6 @@
     color: #FFFFFF !important;
   }
 
-  /* Micro labels: slightly positive tracking for legibility */
-  .caption-label {
-    letter-spacing: 0.05em;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
   /* Instant tactile feedback on press (kill latency) */
   button:active, [role="button"]:active {
     transform: scale(0.975);
@@ -64,45 +55,36 @@
 }
 
 @layer components {
-  /* Apple HIG Frosted Translucent Card */
+  /* Solid Tone-Step Surface (No Fake Glass, No Resting Shadows) */
   .astryx-card {
-    background-color: rgba(22, 22, 24, 0.72);
-    backdrop-filter: blur(24px) saturate(190%);
-    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    background-color: #141416;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-top: 1px solid rgba(255, 255, 255, 0.14); /* Specular top edge highlight */
     border-radius: 20px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
   }
 
   .astryx-card:hover {
     border-color: rgba(255, 255, 255, 0.16);
-    border-top-color: rgba(255, 255, 255, 0.22);
+    background-color: #18181b;
   }
 
-  /* Liquid Glass Surface (Floating Apple Nav & Highlights) */
+  /* Clean Solid Surface */
   .liquid-glass-surface {
-    background: linear-gradient(180deg, rgba(28, 28, 32, 0.78) 0%, rgba(18, 18, 20, 0.86) 100%);
-    backdrop-filter: blur(28px) saturate(200%) contrast(105%);
-    -webkit-backdrop-filter: blur(28px) saturate(200%) contrast(105%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-top: 1px solid rgba(255, 255, 255, 0.20);
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    background-color: #18181b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  /* Monospace Metrics Badge */
+  /* Metric Badge: Text face, tabular figures, no mono */
   .astryx-badge {
-    font-family: var(--font-mono);
-    font-feature-settings: "tnum" 1, "zero" 1;
+    font-family: var(--font-sans);
+    font-feature-settings: "tnum" 1;
     font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: -0.01em;
     padding: 0.25rem 0.625rem;
     border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #F5F5F7;
+    background-color: #1c1c20;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
