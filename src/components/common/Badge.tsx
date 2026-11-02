@@ -23,10 +23,10 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-sans font-medium rounded-lg border tracking-tight tabular-nums select-none ${variantStyles} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-lg border tracking-tight tabular-nums select-none ${variantStyles} ${className}`}
     >
       {icon && <span className="opacity-90 shrink-0">{icon}</span>}
-      <span className="font-sans font-medium text-white">{children}</span>
+      <span className="font-sans font-medium text-[#F5F5F7]">{children}</span>
     </span>
   );
 };

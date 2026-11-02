@@ -40,13 +40,13 @@ export const AdminPage: React.FC = () => {
 
   if (!isAuthenticated) {
     return (
-      <div data-ui="admin-login" className="min-h-[100dvh] bg-[#000000] flex items-center justify-center p-4">
-        <div className="astryx-card w-full max-w-md p-7 sm:p-8 bg-[#141416] border border-white/10 rounded-3xl">
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center p-4">
+        <div className="astryx-card w-full max-w-md p-7 sm:p-8 bg-[#161618] border border-white/10 shadow-2xl rounded-3xl">
           <div className="text-center mb-6">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-blue/10 border border-accent-blue/20 text-accent-blue">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-blue-subtle border border-accent-blue/30 text-accent-blue">
               <ShieldCheck size={28} weight="fill" />
             </div>
-            <Badge variant="blue">Вход для администратора</Badge>
+            <Badge variant="blue">ВХОД ДЛЯ АДМИНИСТРАТОРА</Badge>
             <h1 className="text-2xl font-extrabold text-[#F5F5F7] tracking-tight mt-2">
               Панель управления
             </h1>
@@ -64,7 +64,7 @@ export const AdminPage: React.FC = () => {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-sans text-[#F5F5F7] mb-1.5 font-medium">
+              <label className="block text-xs font-mono text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
                 Логин
               </label>
               <div className="relative">
@@ -74,14 +74,14 @@ export const AdminPage: React.FC = () => {
                   placeholder="admin"
                   value={login}
                   onChange={(e) => setLogin(e.target.value)}
-                  className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-sm text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                  className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-sm font-mono text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                 />
                 <User size={18} className="absolute left-3.5 top-3 text-[#86868B]" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-sans text-[#F5F5F7] mb-1.5 font-medium">
+              <label className="block text-xs font-mono text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
                 Пароль
               </label>
               <div className="relative">
@@ -91,7 +91,7 @@ export const AdminPage: React.FC = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-sm text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                  className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-sm font-mono text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                 />
                 <Lock size={18} className="absolute left-3.5 top-3 text-[#86868B]" />
               </div>

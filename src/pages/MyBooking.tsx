@@ -425,13 +425,13 @@ export const MyBooking: React.FC = () => {
   const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent(tenant.address)}`;
 
   return (
-    <div className="min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between pt-4 sm:pt-10">
+    <div className="min-h-screen bg-[#000000] text-white flex flex-col justify-between pt-4 sm:pt-10">
       {/* Main Content Area */}
       <div className="mx-auto w-full max-w-3xl lg:max-w-4xl px-4 sm:px-6 mb-8 sm:mb-12">
         {/* Back Button */}
         <button
           onClick={() => navigate(`/s/${currentSlug}`)}
-          className="hidden sm:inline-flex items-center gap-2 text-xs font-medium text-[#A1A1A8] hover:text-white transition-colors mb-6"
+          className="hidden sm:inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#A1A1A6] hover:text-white transition-colors mb-6"
         >
           <ArrowLeft size={16} /> На главную студии
         </button>
@@ -439,13 +439,13 @@ export const MyBooking: React.FC = () => {
         {/* Page Title & Intro */}
         <div className="mb-5 sm:mb-7">
           <Badge variant="blue" icon={<ShieldCheck size={14} weight="fill" />}>
-            Статус визита
+            ПРОВЕРКА БРОНИРОВАНИЯ
           </Badge>
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight mt-2.5 mb-2">
             Моя запись
           </h1>
-          <p className="text-xs sm:text-sm text-[#A1A1A8] max-w-2xl leading-relaxed">
-            Точное время заезда, статус готовности автомобиля и управление бронью без регистрации.
+          <p className="text-xs sm:text-sm text-[#A1A1A6] max-w-2xl leading-relaxed">
+            Просмотр деталей вашего визита, времени готовности бокса и моментальное управление бронью без регистрации.
           </p>
         </div>
 
@@ -453,19 +453,19 @@ export const MyBooking: React.FC = () => {
         {!bookingData ? (
           <div className="space-y-4 sm:space-y-5">
             {/* Main Search Card with Tabs */}
-            <div className="astryx-card p-5 sm:p-8 bg-[#141416] border border-white/10 rounded-3xl">
+            <div className="astryx-card p-5 sm:p-8 bg-[#161618] border border-white/10 rounded-3xl shadow-2xl">
               {/* Compact Mode Switcher Tabs */}
-              <div className="flex gap-1 p-1 rounded-2xl bg-[#1C1C20] w-fit mb-5">
+              <div className="flex gap-1.5 p-1 rounded-2xl bg-[#1C1C1E] border border-white/10 w-fit mb-5">
                 <button
                   type="button"
                   onClick={() => {
                     setSearchTab('plate');
                     setNotFound(false);
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-transform duration-100 ease-out active:scale-[0.96] ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
                     searchTab === 'plate'
-                      ? 'bg-accent-blue text-black font-bold'
-                      : 'text-[#A1A1A8] hover:text-white'
+                      ? 'bg-accent-blue text-white shadow-sm'
+                      : 'text-[#A1A1A6] hover:text-white'
                   }`}
                 >
                   <Car size={16} weight={searchTab === 'plate' ? 'fill' : 'regular'} />
@@ -477,10 +477,10 @@ export const MyBooking: React.FC = () => {
                     setSearchTab('token');
                     setNotFound(false);
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-transform duration-100 ease-out active:scale-[0.96] ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
                     searchTab === 'token'
-                      ? 'bg-accent-blue text-black font-bold'
-                      : 'text-[#A1A1A8] hover:text-white'
+                      ? 'bg-accent-blue text-white shadow-sm'
+                      : 'text-[#A1A1A6] hover:text-white'
                   }`}
                 >
                   <Ticket size={16} weight={searchTab === 'token' ? 'fill' : 'regular'} />
@@ -501,7 +501,7 @@ export const MyBooking: React.FC = () => {
                       setInputValue(searchTab === 'plate' ? val.toUpperCase() : val);
                       setNotFound(false);
                     }}
-                    className="w-full bg-[#1C1C20] rounded-2xl px-4 py-3.5 pl-11 text-sm sm:text-base text-white placeholder-[#6E6E73] focus:outline-none focus:ring-1 focus:ring-accent-blue transition-colors font-bold uppercase tracking-wide"
+                    className="w-full bg-[#1C1C1E] border border-white/15 rounded-2xl px-4 py-3.5 pl-11 text-sm sm:text-base text-white placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue transition-colors font-bold uppercase tracking-wider"
                   />
                   {searchTab === 'plate' ? (
                     <Car size={18} className="absolute left-4 top-4 text-[#86868B]" />
@@ -524,7 +524,7 @@ export const MyBooking: React.FC = () => {
 
               {/* Error Alert if Not Found */}
               {notFound && (
-                <div className="mt-4 p-4 rounded-2xl bg-rose-950/40 text-rose-300 text-xs flex items-center gap-2.5">
+                <div className="mt-4 p-4 rounded-2xl bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5 animate-fade-in">
                   <WarningCircle size={20} className="shrink-0 text-rose-400" />
                   <span>
                     Запись с указанным {searchTab === 'plate' ? 'госномером' : 'номером'} не найдена. Проверьте правильность ввода или свяжитесь с администратором.
@@ -539,7 +539,7 @@ export const MyBooking: React.FC = () => {
             </div>
 
             {/* Help bar with administrator phone */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:px-5 sm:py-3.5 rounded-2xl bg-[#141416] text-xs text-[#A1A1A8]">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:px-5 sm:py-3.5 rounded-2xl bg-[#161618] border border-white/10 text-xs text-[#A1A1A6]">
               <span>Не получается найти бронь или изменились планы?</span>
               <a
                 href={`tel:${tenant.phone.replace(/[^+\d]/g, '')}`}
@@ -553,17 +553,17 @@ export const MyBooking: React.FC = () => {
           </div>
         ) : (
           /* Active Booking Details Card */
-          <div className="astryx-card p-5 sm:p-8 md:p-10 bg-[#141416] border border-white/10 rounded-3xl space-y-6">
+          <div className="astryx-card p-5 sm:p-8 md:p-10 bg-[#161618] border border-white/10 rounded-3xl shadow-2xl space-y-6 animate-fade-in">
             {cancelSuccessMsg && (
-              <div className="p-3.5 rounded-2xl bg-emerald-950/40 text-emerald-300 text-xs flex items-center gap-2">
+              <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
                 <CheckCircle size={18} className="shrink-0 text-emerald-400" />
                 <span>{cancelSuccessMsg}</span>
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-white/10">
               <div>
-                <span className="text-xs text-accent-blue font-medium block mb-1">
+                <span className="text-[11px] uppercase tracking-wider text-accent-blue font-semibold block mb-1">
                   Номер бронирования: #{bookingData.booking_number}
                 </span>
                 <h3 className="text-xl sm:text-2xl font-extrabold text-white">
@@ -592,12 +592,15 @@ export const MyBooking: React.FC = () => {
             </div>
 
             {/* Live Car Status Tracker & Auto-Sync Card */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#1C1C20] space-y-4">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5">
                     {bookingData.status === 'in_progress' ? (
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-blue"></span>
+                      <>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-blue opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-blue"></span>
+                      </>
                     ) : bookingData.status === 'completed' || bookingData.status === 'done' ? (
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
                     ) : bookingData.status === 'cancelled' ? (
@@ -606,7 +609,7 @@ export const MyBooking: React.FC = () => {
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                     )}
                   </span>
-                  <span className="text-xs text-[#A1A1A8] font-medium">
+                  <span className="text-xs uppercase tracking-wider text-white/70 font-bold">
                     Текущий статус машины в боксе
                   </span>
                 </div>
@@ -616,7 +619,7 @@ export const MyBooking: React.FC = () => {
                   type="button"
                   onClick={() => refreshBookingStatus(false)}
                   disabled={isRefreshingStatus}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] text-xs font-semibold text-white/90 hover:text-white transition-colors duration-100 active:scale-95"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] text-xs font-semibold text-white/90 hover:text-white transition-all active:scale-95 border border-white/10"
                   title="Проверить статус"
                 >
                   <ArrowsClockwise
@@ -628,7 +631,7 @@ export const MyBooking: React.FC = () => {
               </div>
 
               {bookingData.status === 'cancelled' ? (
-                <div className="p-4 rounded-xl bg-rose-950/30 text-rose-300 text-xs">
+                <div className="p-4 rounded-xl bg-rose-950/30 border border-rose-500/20 text-rose-300 text-xs">
                   <span className="font-bold block text-sm mb-1 text-rose-400">Бронирование отменено</span>
                   Запись на мойку была отменена. Чтобы выбрать другое время или автомобиль, вернитесь на главную страницу.
                 </div>
@@ -638,12 +641,12 @@ export const MyBooking: React.FC = () => {
                   <div className="grid grid-cols-3 gap-2 pt-1">
                     {/* Step 1: Ожидает */}
                     <div
-                      className={`p-3 rounded-xl text-center transition-colors duration-100 ${
+                      className={`p-3 rounded-xl border text-center transition-all ${
                         bookingData.status === 'pending'
-                          ? 'bg-amber-500/10 text-amber-300'
+                          ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 ring-1 ring-amber-500/30'
                           : bookingData.status === 'in_progress' || bookingData.status === 'completed' || bookingData.status === 'done'
-                          ? 'bg-white/[0.04] text-emerald-400'
-                          : 'bg-white/[0.02] text-white/40'
+                          ? 'bg-white/[0.04] border-emerald-500/30 text-emerald-400'
+                          : 'bg-white/[0.02] border-white/5 text-white/40'
                       }`}
                     >
                       <div className="flex justify-center mb-1.5">
@@ -659,18 +662,19 @@ export const MyBooking: React.FC = () => {
 
                     {/* Step 2: В боксе */}
                     <div
-                      className={`p-3 rounded-xl text-center transition-colors duration-100 ${
+                      className={`p-3 rounded-xl border text-center transition-all ${
                         bookingData.status === 'in_progress'
-                          ? 'bg-accent-blue/15 text-accent-blue'
+                          ? 'bg-accent-blue/15 border-accent-blue/50 text-accent-blue ring-2 ring-accent-blue/30 shadow-lg'
                           : bookingData.status === 'completed' || bookingData.status === 'done'
-                          ? 'bg-white/[0.04] text-emerald-400'
-                          : 'bg-white/[0.02] text-white/40'
+                          ? 'bg-white/[0.04] border-emerald-500/30 text-emerald-400'
+                          : 'bg-white/[0.02] border-white/5 text-white/40'
                       }`}
                     >
                       <div className="flex justify-center mb-1.5">
                         <Drop
                           size={20}
                           weight={bookingData.status === 'in_progress' ? 'fill' : 'regular'}
+                          className={bookingData.status === 'in_progress' ? 'animate-bounce' : ''}
                         />
                       </div>
                       <span className="block text-[11px] sm:text-xs font-bold leading-tight">
@@ -683,10 +687,10 @@ export const MyBooking: React.FC = () => {
 
                     {/* Step 3: Готова */}
                     <div
-                      className={`p-3 rounded-xl text-center transition-colors duration-100 ${
+                      className={`p-3 rounded-xl border text-center transition-all ${
                         bookingData.status === 'completed' || bookingData.status === 'done'
-                          ? 'bg-emerald-500/15 text-emerald-400'
-                          : 'bg-white/[0.02] text-white/40'
+                          ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-400 ring-2 ring-emerald-500/30 shadow-lg'
+                          : 'bg-white/[0.02] border-white/5 text-white/40'
                       }`}
                     >
                       <div className="flex justify-center mb-1.5">
@@ -705,7 +709,7 @@ export const MyBooking: React.FC = () => {
                   </div>
 
                   {/* Contextual Status Banner Description */}
-                  <div className="text-xs text-white/80 bg-black/40 rounded-xl px-3.5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5">
+                  <div className="text-xs text-white/80 bg-black/40 rounded-xl px-3.5 py-2.5 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5">
                     <span>
                       {bookingData.status === 'pending' &&
                         `Ожидаем ваш автомобиль в ${bookingData.box_name} к ${bookingData.timeStr}. Мастера подготовят пост к заезду.`}
@@ -723,9 +727,9 @@ export const MyBooking: React.FC = () => {
             </div>
 
             {/* Detailed Grid Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
-              <div className="p-4 rounded-2xl bg-[#1C1C20] space-y-1">
-                <span className="text-xs text-[#A1A1A8] font-medium block">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
+              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1">
+                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
                   Автомобиль
                 </span>
                 <span className="text-sm sm:text-base font-bold text-white">
@@ -733,17 +737,17 @@ export const MyBooking: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1C1C20] space-y-1">
-                <span className="text-xs text-[#A1A1A8] font-medium block">
+              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1">
+                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
                   Дата и время заезда
                 </span>
-                <span className="text-sm sm:text-base font-bold text-accent-blue tabular-nums">
+                <span className="text-sm sm:text-base font-bold text-accent-blue">
                   {bookingData.date} в {bookingData.timeStr}
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1C1C20] space-y-1">
-                <span className="text-xs text-[#A1A1A8] font-medium block">
+              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1">
+                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
                   Назначенный бокс
                 </span>
                 <span className="text-sm sm:text-base font-bold text-white">
@@ -751,17 +755,17 @@ export const MyBooking: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1C1C20] space-y-1">
-                <span className="text-xs text-[#A1A1A8] font-medium block">
+              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1">
+                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
                   К оплате при заезде
                 </span>
-                <span className="text-xl sm:text-2xl font-extrabold text-white tracking-wide tabular-nums">
+                <span className="text-xl sm:text-2xl font-extrabold text-white tracking-wide">
                   {Number(bookingData.total_price || 0).toLocaleString('ru-RU')} ₽
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1C1C20] space-y-1 sm:col-span-2">
-                <span className="text-xs text-[#A1A1A8] font-medium block">
+              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1 sm:col-span-2">
+                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
                   Адрес боксов
                 </span>
                 <span className="text-xs sm:text-sm font-medium text-white block">
@@ -780,7 +784,7 @@ export const MyBooking: React.FC = () => {
             </div>
 
             {/* Actions footer */}
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -799,7 +803,7 @@ export const MyBooking: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCancelBooking}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-950/20 text-rose-400 hover:bg-rose-950/40 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-rose-500/30 bg-rose-950/20 text-rose-400 hover:bg-rose-950/40 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
                 >
                   <XCircle size={16} /> Отменить бронирование
                 </button>

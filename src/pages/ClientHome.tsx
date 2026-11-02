@@ -27,7 +27,7 @@ export const ClientHome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#000000] text-[#F5F5F7]">
+    <div className="min-h-screen bg-[#000000] text-[#F5F5F7]">
       {confirmedBooking ? (
         <BookingSuccess
           booking={confirmedBooking}

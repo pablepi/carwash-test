@@ -72,29 +72,32 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-[-0.025em]">
-              Тарифы и услуги
+            <span className="text-[11px] font-mono uppercase tracking-widest text-accent-blue font-semibold">
+              ПРАЙС-ЛИСТ И ТАРИФЫ
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#FFFFFF] tracking-tight mt-0.5">
+              Услуги автомойки
             </h2>
-            <p className="text-xs sm:text-sm text-[#A1A1A8] mt-1 font-normal">
-              Выберите тип автомобиля для точного расчета стоимости и времени мойки
+            <p className="text-xs text-[#86868B] mt-1">
+              Выберите тип вашего автомобиля для автоматического расчета точной стоимости
             </p>
           </div>
 
-          {/* Car Category Switcher: Solid Segmented Control */}
-          <div className="flex items-center gap-1 p-1 bg-[#141416] border border-white/10 rounded-2xl self-start sm:self-auto">
+          {/* Car Category Switcher: Apple HIG Segmented Control */}
+          <div className="flex items-center gap-1 p-1 bg-[#161618] border border-white/[0.08] rounded-2xl self-start sm:self-auto shadow-inner">
             {config.carCategories.map((cat) => {
               const isSelected = selectedCarCategory === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCarCategory(cat.id as CarCategoryId)}
-                  className={`relative px-4 py-2 rounded-xl text-xs font-semibold transition-transform duration-100 ease-out select-none flex items-center gap-1.5 active:scale-[0.97] ${
+                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 select-none flex items-center gap-1.5 ${
                     isSelected
-                      ? 'bg-accent-blue text-black font-bold'
-                      : 'text-[#86868B] hover:text-white'
+                      ? 'bg-accent-blue text-white shadow-md'
+                      : 'text-[#86868B] hover:text-[#FFFFFF]'
                   }`}
                 >
-                  {isSelected && <Check size={12} weight="bold" className="shrink-0 text-black" />}
+                  {isSelected && <Check size={12} weight="bold" className="shrink-0" />}
                   <span>{cat.name}</span>
                 </button>
               );
@@ -103,15 +106,15 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
         </div>
 
         {/* Category filter tabs */}
-        <div className="flex gap-1.5 p-1 rounded-xl bg-[#141416] border border-white/10 self-start overflow-x-auto max-w-full">
+        <div className="flex gap-1.5 p-1 rounded-xl bg-[#161618] border border-white/[0.08] self-start overflow-x-auto max-w-full">
           {filterTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveFilter(tab.id)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-transform duration-100 ease-out whitespace-nowrap active:scale-[0.97] ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
                 activeFilter === tab.id
-                  ? 'bg-[#222226] text-white'
-                  : 'text-[#86868B] hover:text-white'
+                  ? 'bg-white/10 text-[#FFFFFF] shadow-sm'
+                  : 'text-[#86868B] hover:text-[#FFFFFF]'
               }`}
             >
               {tab.label}
@@ -121,7 +124,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
       </div>
 
       {/* Service cards */}
-      <div className="space-y-3.5">
+      <div className="space-y-3">
         {filteredServices.map((service) => {
           const isSelected = selectedServiceId === service.id;
           const currentPrice = service.prices[selectedCarCategory];
@@ -130,9 +133,9 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
             <div
               key={service.id}
               onClick={() => handleServiceClick(service)}
-              className={`astryx-card p-4 sm:p-5 cursor-pointer transition-colors duration-150 active:scale-[0.99] ${
+              className={`astryx-card p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
                 isSelected
-                  ? 'border-accent-blue bg-[#1C1C20] ring-1 ring-accent-blue'
+                  ? 'border-accent-blue bg-[#1C1C1E] shadow-[0_0_20px_-4px_var(--apple-accent-blue)] ring-1 ring-accent-blue'
                   : 'hover:border-white/20'
               }`}
             >
@@ -140,32 +143,32 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                    <h3 className="text-sm sm:text-base font-bold text-[#FFFFFF] tracking-tight">
                       {service.name}
                     </h3>
-                    <div className="flex items-center gap-1.5 text-xs text-white bg-[#222226] px-2.5 py-0.5 rounded-lg border border-white/10 shrink-0">
+                    <div className="flex items-center gap-1.5 text-xs font-mono text-[#FFFFFF] bg-[#242426] px-2.5 py-0.5 rounded-md border border-white/15 shrink-0">
                       <Clock size={12} className="text-accent-blue" />
-                      <span className="tabular-nums font-semibold text-white">
+                      <span className="tabular-nums font-semibold text-[#FFFFFF]">
                         {formatDuration(service.durationMinutes)}
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-[#D1D1D6] line-clamp-2 mt-1.5 leading-relaxed font-normal">
+                  <p className="text-xs text-[#E5E5EA] line-clamp-2 mt-1.5 leading-relaxed font-normal">
                     {service.description}
                   </p>
                 </div>
               </div>
 
               {/* Bottom: tags + dynamic price + action button */}
-              <div className="flex items-center justify-between gap-3 mt-4 pt-1">
+              <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-white/[0.1]">
                 <div className="flex flex-wrap gap-1.5 min-w-0 flex-1">
                   {service.badge && (
                     <Badge variant="blue">
-                      <span>{service.badge}</span>
+                      <span className="text-[#FFFFFF]">{service.badge}</span>
                     </Badge>
                   )}
                   <Badge variant="neutral">
-                    <span>
+                    <span className="text-[#FFFFFF]">
                       {config.carCategories.find((c) => c.id === selectedCarCategory)?.name}
                     </span>
                   </Badge>
@@ -173,10 +176,10 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
 
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <span className="block text-xs text-[#86868B] font-medium">
+                    <span className="block text-[10px] font-mono text-[#86868B] uppercase tracking-wider font-semibold">
                       Стоимость
                     </span>
-                    <span className="font-sans text-base sm:text-lg font-bold text-white tabular-nums">
+                    <span className="font-mono text-base sm:text-lg font-bold text-[#FFFFFF] tabular-nums transition-all">
                       {currentPrice.toLocaleString('ru-RU')}&nbsp;₽
                     </span>
                   </div>
@@ -184,10 +187,10 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
                   <GlassButton
                     variant="primary"
                     size="sm"
-                    className="font-bold"
+                    className="font-bold text-[#FFFFFF]"
                   >
-                    <span className="flex items-center gap-1.5 font-bold">
-                      Записаться <ArrowRight size={13} weight="bold" />
+                    <span className="flex items-center gap-1.5 text-[#FFFFFF] font-bold">
+                      Записаться <ArrowRight size={13} weight="bold" className="text-[#FFFFFF]" />
                     </span>
                   </GlassButton>
                 </div>

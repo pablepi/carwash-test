@@ -131,7 +131,7 @@ export const FloatingBottomNav: React.FC<FloatingBottomNavProps> = ({ onOpenBook
                       className="transition-transform duration-150 group-hover:scale-105"
                     />
                     {item.isActive && (
-                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-accent-blue" />
+                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-accent-blue shadow-[0_0_8px_var(--apple-accent-blue)]" />
                     )}
                   </div>
                   <span

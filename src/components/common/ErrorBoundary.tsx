@@ -32,8 +32,8 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-[100dvh] bg-[#000000] text-[#F5F5F7] flex items-center justify-center p-4">
-          <div className="astryx-card w-full max-w-md p-6 sm:p-8 bg-[#141416] border border-white/10 rounded-3xl text-center space-y-4">
+        <div className="min-h-screen bg-[#000000] text-[#F5F5F7] flex items-center justify-center p-4">
+          <div className="astryx-card w-full max-w-md p-6 sm:p-8 bg-[#161618] border border-white/10 rounded-3xl shadow-2xl text-center space-y-4">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
               <WarningOctagon size={32} weight="fill" />
             </div>
@@ -53,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   this.setState({ hasError: false, error: null });
                   window.location.reload();
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-white/90 active:scale-95 transition-colors duration-100"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-white/90 active:scale-95 transition-all shadow-md"
               >
                 <ArrowClockwise size={16} weight="bold" />
                 <span>Обновить</span>
@@ -65,7 +65,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   this.setState({ hasError: false, error: null });
                   window.location.href = '/';
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 text-white font-semibold text-xs hover:bg-white/15 active:scale-95 transition-colors duration-100 border border-white/10"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 text-white font-semibold text-xs hover:bg-white/15 active:scale-95 transition-all border border-white/10"
               >
                 <ArrowLeft size={16} />
                 <span>На главную</span>

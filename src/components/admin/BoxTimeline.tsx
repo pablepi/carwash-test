@@ -175,8 +175,8 @@ export const BoxTimeline: React.FC<BoxTimelineProps> = ({
                             </button>
                           )}
                           {b.status === 'done' && (
-                            <span className="text-xs text-text-tertiary text-center w-full py-0.5">
-                              Завершена (выдана)
+                            <span className="text-[11px] font-mono text-text-tertiary text-center w-full py-0.5">
+                              ✓ Завершена (выдана)
                             </span>
                           )}
                           {b.status === 'cancelled' && (
