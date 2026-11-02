@@ -35,23 +35,28 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ tenant: propTenant, on
 
           {/* Top metadata badge - single non-wrapping row */}
           <div className="absolute top-3.5 left-3 right-3 z-20 flex items-center justify-between gap-2 flex-nowrap">
-            <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-md border border-white/10 text-[#F5F5F7] text-[11px] sm:text-xs min-w-0 max-w-[65%]">
+            <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-3.5 py-1.5 backdrop-blur-xl border border-white/10 text-white text-[11px] sm:text-xs min-w-0 max-w-[65%] shadow-sm">
               <MapPin size={13} className="text-accent-blue shrink-0" weight="bold" />
-              <span className="truncate">{address}</span>
+              <span className="truncate font-medium">{address}</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-md border border-white/10 text-[#F5F5F7] text-[11px] sm:text-xs shrink-0 font-sans">
+            <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-3.5 py-1.5 backdrop-blur-xl border border-white/10 text-white text-[11px] sm:text-xs shrink-0 shadow-sm">
               <Clock size={13} className="text-accent-blue shrink-0" weight="bold" />
-              <span className="font-sans font-medium">{hours}</span>
+              <span className="font-medium tabular-nums">{hours}</span>
             </div>
           </div>
 
           {/* Hero Content anchored safely inside the container with top clearance */}
           <div className="absolute inset-x-0 bottom-0 z-20 p-5 sm:p-8 pt-16 flex flex-col items-start justify-end">
-            <span className="text-[11px] font-sans uppercase tracking-widest text-accent-blue font-semibold mb-1.5">
-              {name}
-            </span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.08em] text-accent-blue font-bold px-2.5 py-1 rounded-full bg-accent-blue/10 border border-accent-blue/25 backdrop-blur-md">
+                {name}
+              </span>
+              <span className="text-[10px] sm:text-[11px] text-white/70 font-medium hidden sm:inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> 3 поста готовы к приему
+              </span>
+            </div>
 
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#F5F5F7] leading-[1.15] max-w-2xl mb-2 sm:mb-3">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-[-0.03em] text-white leading-[1.08] max-w-2xl mb-2 sm:mb-3">
               {title}
             </h1>
 
@@ -63,15 +68,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ tenant: propTenant, on
             <div className="w-full sm:w-auto">
               <button
                 onClick={onBookClick}
-                className="group relative inline-flex w-full sm:w-auto items-center justify-center font-sans font-semibold tracking-tight transition-all duration-150 ease-out active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+                className="group relative inline-flex w-full sm:w-auto items-center justify-center font-semibold tracking-[-0.01em] transition-all duration-150 ease-out active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
               >
                 <LiquidGlass
                   rounded="rounded-2xl"
-                  className="w-full transition-all duration-200 group-hover:border-accent-blue/50 shadow-[0_0_24px_-4px_var(--apple-accent-blue)]"
+                  className="w-full transition-all duration-200 group-hover:border-accent-blue/50 shadow-[0_4px_24px_-4px_rgba(0,199,190,0.45)]"
                 >
                   <div className="flex items-center justify-center gap-2.5 px-6 py-3.5 text-sm sm:text-base select-none">
                     <CalendarPlus size={20} weight="bold" className="text-accent-blue shrink-0" />
-                    <span className="font-semibold tracking-tight text-[#FFFFFF]">
+                    <span className="font-bold tracking-tight text-white">
                       Записаться на мойку
                     </span>
                   </div>

@@ -72,29 +72,29 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-accent-blue font-semibold">
-              ПРАЙС-ЛИСТ И ТАРИФЫ
+            <span className="caption-label text-accent-blue font-bold">
+              Тарифы и услуги
             </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#FFFFFF] tracking-tight mt-0.5">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-[-0.025em] mt-1">
               Услуги автомойки
             </h2>
-            <p className="text-xs text-[#86868B] mt-1">
-              Выберите тип вашего автомобиля для автоматического расчета точной стоимости
+            <p className="text-xs sm:text-sm text-[#A1A1A6] mt-1 font-normal">
+              Выберите тип автомобиля для точного расчета стоимости и времени мойки
             </p>
           </div>
 
           {/* Car Category Switcher: Apple HIG Segmented Control */}
-          <div className="flex items-center gap-1 p-1 bg-[#161618] border border-white/[0.08] rounded-2xl self-start sm:self-auto shadow-inner">
+          <div className="flex items-center gap-1 p-1 bg-[#141416]/90 border border-white/10 rounded-2xl self-start sm:self-auto backdrop-blur-xl shadow-inner">
             {config.carCategories.map((cat) => {
               const isSelected = selectedCarCategory === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCarCategory(cat.id as CarCategoryId)}
-                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 select-none flex items-center gap-1.5 ${
+                  className={`relative px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-150 select-none flex items-center gap-1.5 active:scale-[0.97] ${
                     isSelected
                       ? 'bg-accent-blue text-white shadow-md'
-                      : 'text-[#86868B] hover:text-[#FFFFFF]'
+                      : 'text-[#86868B] hover:text-white'
                   }`}
                 >
                   {isSelected && <Check size={12} weight="bold" className="shrink-0" />}
@@ -106,15 +106,15 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
         </div>
 
         {/* Category filter tabs */}
-        <div className="flex gap-1.5 p-1 rounded-xl bg-[#161618] border border-white/[0.08] self-start overflow-x-auto max-w-full">
+        <div className="flex gap-1.5 p-1 rounded-xl bg-[#141416]/80 border border-white/10 self-start overflow-x-auto max-w-full backdrop-blur-md">
           {filterTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
                 activeFilter === tab.id
-                  ? 'bg-white/10 text-[#FFFFFF] shadow-sm'
-                  : 'text-[#86868B] hover:text-[#FFFFFF]'
+                  ? 'bg-white/10 text-white shadow-sm'
+                  : 'text-[#86868B] hover:text-white'
               }`}
             >
               {tab.label}
@@ -124,7 +124,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
       </div>
 
       {/* Service cards */}
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         {filteredServices.map((service) => {
           const isSelected = selectedServiceId === service.id;
           const currentPrice = service.prices[selectedCarCategory];
@@ -133,9 +133,9 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
             <div
               key={service.id}
               onClick={() => handleServiceClick(service)}
-              className={`astryx-card p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
+              className={`astryx-card p-4 sm:p-5 cursor-pointer transition-all duration-200 active:scale-[0.99] ${
                 isSelected
-                  ? 'border-accent-blue bg-[#1C1C1E] shadow-[0_0_20px_-4px_var(--apple-accent-blue)] ring-1 ring-accent-blue'
+                  ? 'border-accent-blue bg-[#1C1C1E]/90 shadow-[0_0_24px_-4px_rgba(0,199,190,0.35)] ring-1 ring-accent-blue'
                   : 'hover:border-white/20'
               }`}
             >

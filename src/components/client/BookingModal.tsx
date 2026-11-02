@@ -206,29 +206,29 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="astryx-card w-full max-w-lg bg-[#161618] border border-white/10 shadow-2xl p-5 sm:p-6 relative rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto">
+      <div className="astryx-card w-full max-w-lg bg-[#141416]/95 border border-white/10 shadow-2xl p-5 sm:p-6 relative rounded-t-[28px] sm:rounded-3xl max-h-[92vh] overflow-y-auto backdrop-blur-2xl">
         {/* Header Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-[#86868B] hover:text-[#F5F5F7] p-1.5 rounded-full bg-[#1C1C1E] transition-colors z-20"
+          className="absolute top-4 right-4 text-[#86868B] hover:text-white p-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] transition-all active:scale-90 z-20"
         >
           <X size={18} />
         </button>
 
         <div className="mb-4 pr-8">
           <Badge variant="blue" icon={<Lock size={12} weight="fill" />}>
-            ОНЛАЙН-ЗАПИСЬ БЕЗ РЕГИСТРАЦИИ
+            Онлайн-запись
           </Badge>
-          <h3 className="text-xl font-extrabold text-[#F5F5F7] tracking-tight mt-2">
-            Запись на автомойку
+          <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-[-0.025em] mt-2">
+            Выбор времени и заезд
           </h3>
-          <p className="text-xs text-[#A1A1A6] mt-0.5">
-            Бронь слота подтверждается мгновенно в один клик.
+          <p className="text-xs text-[#A1A1A6] mt-0.5 leading-relaxed font-normal">
+            Запись в бокс без предоплаты. Оплата на месте после выполнения мойки.
           </p>
         </div>
 

@@ -439,13 +439,13 @@ export const MyBooking: React.FC = () => {
         {/* Page Title & Intro */}
         <div className="mb-5 sm:mb-7">
           <Badge variant="blue" icon={<ShieldCheck size={14} weight="fill" />}>
-            ПРОВЕРКА БРОНИРОВАНИЯ
+            Статус визита
           </Badge>
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight mt-2.5 mb-2">
             Моя запись
           </h1>
           <p className="text-xs sm:text-sm text-[#A1A1A6] max-w-2xl leading-relaxed">
-            Просмотр деталей вашего визита, времени готовности бокса и моментальное управление бронью без регистрации.
+            Точное время заезда, статус готовности автомобиля и управление бронью без регистрации.
           </p>
         </div>
 
@@ -455,16 +455,16 @@ export const MyBooking: React.FC = () => {
             {/* Main Search Card with Tabs */}
             <div className="astryx-card p-5 sm:p-8 bg-[#161618] border border-white/10 rounded-3xl shadow-2xl">
               {/* Compact Mode Switcher Tabs */}
-              <div className="flex gap-1.5 p-1 rounded-2xl bg-[#1C1C1E] border border-white/10 w-fit mb-5">
+              <div className="flex gap-1 p-1 rounded-2xl bg-[#1C1C1E] border border-white/10 w-fit mb-5">
                 <button
                   type="button"
                   onClick={() => {
                     setSearchTab('plate');
                     setNotFound(false);
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-100 ease-out active:scale-[0.96] ${
                     searchTab === 'plate'
-                      ? 'bg-accent-blue text-white shadow-sm'
+                      ? 'bg-accent-blue text-white shadow-[0_2px_10px_rgba(0,199,190,0.35)]'
                       : 'text-[#A1A1A6] hover:text-white'
                   }`}
                 >
@@ -477,9 +477,9 @@ export const MyBooking: React.FC = () => {
                     setSearchTab('token');
                     setNotFound(false);
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-100 ease-out active:scale-[0.96] ${
                     searchTab === 'token'
-                      ? 'bg-accent-blue text-white shadow-sm'
+                      ? 'bg-accent-blue text-white shadow-[0_2px_10px_rgba(0,199,190,0.35)]'
                       : 'text-[#A1A1A6] hover:text-white'
                   }`}
                 >

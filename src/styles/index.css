@@ -6,52 +6,89 @@
 
 @layer base {
   *, ::before, ::after {
-    font-family: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     background-color: #000000;
     color: #F5F5F7;
-    font-family: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     overflow-x: hidden;
     margin: 0;
     padding: 0;
+    line-height: 1.5;
+    letter-spacing: -0.005em;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
-    letter-spacing: -0.01em;
+  /* Optical Sizing & Tracking: Large display text wants negative tracking, tight leading */
+  h1, .display-title {
+    font-family: var(--font-sans);
+    letter-spacing: -0.028em;
+    line-height: 1.1;
+    font-weight: 800;
     color: #FFFFFF !important;
   }
 
-  button, input, select, textarea, p, span, label, a {
-    font-family: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
-    -webkit-font-smoothing: subpixel-antialiased;
+  h2 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.022em;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #FFFFFF !important;
+  }
+
+  h3 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    font-weight: 600;
+    color: #FFFFFF !important;
+  }
+
+  /* Micro labels: slightly positive tracking for legibility */
+  .caption-label {
+    letter-spacing: 0.05em;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  /* Instant tactile feedback on press (kill latency) */
+  button:active, [role="button"]:active {
+    transform: scale(0.975);
+    transition: transform 80ms ease-out;
   }
 }
 
 @layer components {
-  /* Apple HIG Card */
+  /* Apple HIG Frosted Translucent Card */
   .astryx-card {
-    background-color: #161618;
+    background-color: rgba(22, 22, 24, 0.72);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14); /* Specular top edge highlight */
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .astryx-card:hover {
-    border-color: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.16);
+    border-top-color: rgba(255, 255, 255, 0.22);
   }
 
-  /* Liquid Glass Surface (Apple HIG Frosted Glass) */
+  /* Liquid Glass Surface (Floating Apple Nav & Highlights) */
   .liquid-glass-surface {
-    background: linear-gradient(180deg, rgba(30, 30, 34, 0.82) 0%, rgba(18, 18, 20, 0.88) 100%);
-    backdrop-filter: blur(28px) saturate(190%) contrast(105%);
-    -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(105%);
+    background: linear-gradient(180deg, rgba(28, 28, 32, 0.78) 0%, rgba(18, 18, 20, 0.86) 100%);
+    backdrop-filter: blur(28px) saturate(200%) contrast(105%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%) contrast(105%);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 10px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.16);
+    border-top: 1px solid rgba(255, 255, 255, 0.20);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
   }
 
   /* Monospace Metrics Badge */
@@ -59,12 +96,12 @@
     font-family: var(--font-mono);
     font-feature-settings: "tnum" 1, "zero" 1;
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: -0.01em;
     padding: 0.25rem 0.625rem;
     border-radius: 8px;
-    background-color: #1C1C1E;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #F5F5F7;
     display: inline-flex;
     align-items: center;

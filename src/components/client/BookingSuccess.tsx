@@ -101,20 +101,20 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
           <CheckCircle size={36} weight="fill" />
         </div>
 
-        <Badge variant="success">ЗАПИСЬ УСПЕШНО ОФОРМЛЕНА</Badge>
+        <Badge variant="success">Запись подтверждена</Badge>
 
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mt-3 mb-1">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-3 mb-1">
           Ждём вас на мойку
         </h2>
-        <p className="text-xs text-text-secondary max-w-md mx-auto mb-4">
-          Бронь зафиксирована. Регистрация не требуется — используйте номер записи для проверки статуса.
+        <p className="text-xs text-[#A1A1A6] max-w-md mx-auto mb-4 leading-relaxed">
+          Бронь зафиксирована в системе. Заезд строго к выбранному времени без очереди и ожидания.
         </p>
 
         {/* Индивидуальный номер записи */}
-        <div className="mx-auto max-w-sm mb-6 p-4 rounded-2xl bg-white/[0.08] border border-white/15 flex items-center justify-between">
+        <div className="mx-auto max-w-sm mb-6 p-4 rounded-2xl bg-white/[0.06] border border-white/15 flex items-center justify-between">
           <div className="text-left">
             <span className="block text-[10px] uppercase tracking-wider text-[#A1A1A6] font-semibold">
-              Ваш номер записи
+              Номер записи
             </span>
             <span className="text-xl sm:text-2xl font-extrabold text-white tracking-wider font-mono">
               {bookingNumber}
@@ -126,7 +126,7 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
               setCopiedLink(true);
               setTimeout(() => setCopiedLink(false), 2000);
             }}
-            className="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-xs font-semibold text-white transition-colors"
+            className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white transition-all duration-100 ease-out active:scale-[0.96]"
           >
             {copiedLink ? 'Скопировано!' : 'Скопировать'}
           </button>
