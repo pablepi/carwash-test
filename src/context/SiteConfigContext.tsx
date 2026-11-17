@@ -32,6 +32,22 @@ export const applyThemeToDocument = (theme: SiteConfig['theme'], meta?: SiteConf
   if (typeof document === 'undefined') return;
 
   const root = document.documentElement;
+  const isLight = theme.mode === 'light';
+
+  if (isLight) {
+    root.classList.remove('dark');
+    root.classList.add('light');
+    root.setAttribute('data-theme', 'light');
+    document.body.style.backgroundColor = '#F2F2F7';
+    document.body.style.color = '#1C1C1E';
+  } else {
+    root.classList.remove('light');
+    root.classList.add('dark');
+    root.setAttribute('data-theme', 'dark');
+    document.body.style.backgroundColor = theme.bgBase || '#000000';
+    document.body.style.color = theme.textColor || '#F5F5F7';
+  }
+
   const accent = theme.accentColor || '#00C7BE';
   const accentHover = theme.accentHover && theme.accentHover !== accent ? theme.accentHover : accent;
 
@@ -48,9 +64,29 @@ export const applyThemeToDocument = (theme: SiteConfig['theme'], meta?: SiteConf
   root.style.setProperty('--apple-accent-turquoise-glow', `0 0 24px -2px ${accent}80`);
 
   // Surfaces & Base colors
-  root.style.setProperty('--apple-bg-base', theme.bgBase);
-  root.style.setProperty('--apple-bg-card', theme.cardBg);
-  root.style.setProperty('--apple-text-primary', theme.textColor);
+  if (isLight) {
+    root.style.setProperty('--apple-bg-base', '#F2F2F7');
+    root.style.setProperty('--apple-bg-card', '#FFFFFF');
+    root.style.setProperty('--apple-bg-elevated', '#E5E5EA');
+    root.style.setProperty('--apple-bg-surface', '#D1D1D6');
+    root.style.setProperty('--apple-bg-hover', '#E5E5EA');
+    root.style.setProperty('--apple-border-subtle', 'rgba(0, 0, 0, 0.08)');
+    root.style.setProperty('--apple-border-medium', 'rgba(0, 0, 0, 0.16)');
+    root.style.setProperty('--apple-text-primary', '#1C1C1E');
+    root.style.setProperty('--apple-text-secondary', '#636366');
+    root.style.setProperty('--apple-text-tertiary', '#8E8E93');
+  } else {
+    root.style.setProperty('--apple-bg-base', theme.bgBase || '#000000');
+    root.style.setProperty('--apple-bg-card', theme.cardBg || '#161618');
+    root.style.setProperty('--apple-bg-elevated', '#1C1C1E');
+    root.style.setProperty('--apple-bg-surface', '#242426');
+    root.style.setProperty('--apple-bg-hover', '#2C2C2E');
+    root.style.setProperty('--apple-border-subtle', 'rgba(255, 255, 255, 0.08)');
+    root.style.setProperty('--apple-border-medium', 'rgba(255, 255, 255, 0.14)');
+    root.style.setProperty('--apple-text-primary', theme.textColor || '#F5F5F7');
+    root.style.setProperty('--apple-text-secondary', '#86868B');
+    root.style.setProperty('--apple-text-tertiary', '#A1A1A6');
+  }
 
   // Meta updates
   if (meta?.title) {

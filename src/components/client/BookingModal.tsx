@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { X, Lock, Car, Phone, User, Warning, Sparkle, Check } from '@phosphor-icons/react';
 import { ServiceItem } from './ServiceCatalog';
 import { SlotPicker } from './SlotPicker';
@@ -8,6 +9,7 @@ import { useSiteConfig } from '@/context/SiteConfigContext';
 import { CarCategoryId } from '@/config/siteConfig';
 import { TenantConfig } from '@/types/tenant';
 import { sendBookingToGoogleSheets, DEFAULT_GOOGLE_SHEETS_URL } from '@/lib/google-sheets';
+import { slugify } from '@/lib/slugify';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -24,7 +26,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   initialService,
   onSuccess,
 }) => {
+  const { tenantSlug } = useParams<{ tenantSlug?: string }>();
   const { config, selectedCarCategory, setSelectedCarCategory } = useSiteConfig();
+  const currentSlug = tenantSlug || slugify(config.branding.name || 'carwash');
 
   const [selectedServiceId, setSelectedServiceId] = useState<string>(
     initialService?.id || config.services[0]?.id || tenant.services[0]?.id
@@ -402,6 +406,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               {isSubmitting ? 'Бронирование...' : 'Подтвердить запись'}
             </GlassButton>
           </div>
+
+          <p className="text-[11px] text-[#86868B] text-center pt-2 leading-relaxed">
+            Нажимая «Подтвердить запись», вы соглашаетесь с{' '}
+            <a
+              href={`/s/${currentSlug}/privacy`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#A1A1A6] hover:text-accent-blue underline transition-colors"
+            >
+              Политикой конфиденциальности
+            </a>
+          </p>
         </form>
       </div>
     </div>

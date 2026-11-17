@@ -34,6 +34,24 @@
   --font-mono: 'Questrial', 'Montserrat', monospace;
 }
 
+/* Light Theme Variables */
+html.light, [data-theme="light"] {
+  color-scheme: light;
+  --apple-bg-base: #F2F2F7;
+  --apple-bg-card: #FFFFFF;
+  --apple-bg-elevated: #E5E5EA;
+  --apple-bg-surface: #D1D1D6;
+  --apple-bg-hover: #E5E5EA;
+
+  --apple-border-subtle: rgba(0, 0, 0, 0.08);
+  --apple-border-medium: rgba(0, 0, 0, 0.16);
+  --apple-border-accent: rgba(0, 199, 190, 0.6);
+
+  --apple-text-primary: #1C1C1E;
+  --apple-text-secondary: #636366;
+  --apple-text-tertiary: #8E8E93;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;

@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { ClientHome } from './pages/ClientHome';
 import { MyBooking } from './pages/MyBooking';
 import { AdminPage } from './pages/AdminPage';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { slugify } from './lib/slugify';
 
 const queryClient = new QueryClient({
@@ -28,10 +29,12 @@ const AppRoutes: React.FC = () => {
 
       {/* Direct admin shortcut */}
       <Route path="/admin" element={<Navigate to={`/s/${currentSlug}/admin`} replace />} />
+      <Route path="/privacy" element={<Navigate to={`/s/${currentSlug}/privacy`} replace />} />
 
       {/* Tenant Public Client & PWA Flow */}
       <Route path="/s/:tenantSlug" element={<ClientHome />} />
       <Route path="/s/:tenantSlug/my-booking" element={<MyBooking />} />
+      <Route path="/s/:tenantSlug/privacy" element={<PrivacyPolicy />} />
 
       {/* Tenant Owner / Manager Admin Panel */}
       <Route path="/s/:tenantSlug/admin" element={<AdminPage />} />

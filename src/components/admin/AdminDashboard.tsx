@@ -29,6 +29,8 @@ import {
   SignOut,
   Warning,
   CaretDown,
+  Sun,
+  Moon,
 } from '@phosphor-icons/react';
 import { Badge } from '../common/Badge';
 import { GlassButton } from '../common/GlassButton';
@@ -1111,6 +1113,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
       .catch((err) => console.warn('Could not sync config to sheets:', err));
   }, [siteConfig, updateSiteConfig, googleSheetsUrlInput]);
 
+  const isLight = (siteConfig.theme as any)?.mode === 'light';
+
+  const handleSetThemeMode = (mode: 'dark' | 'light') => {
+    const isLightMode = mode === 'light';
+    const updatedTheme = {
+      ...siteConfig.theme,
+      mode,
+      bgBase: isLightMode ? '#F2F2F7' : '#000000',
+      cardBg: isLightMode ? '#FFFFFF' : '#161618',
+      textColor: isLightMode ? '#1C1C1E' : '#F5F5F7',
+    };
+    syncFullConfigToRemote({ theme: updatedTheme });
+    showToast(isLightMode ? 'Включена светлая тема оформления' : 'Включена тёмная тема оформления');
+  };
+
+  const handleToggleThemeMode = () => {
+    handleSetThemeMode(isLight ? 'dark' : 'light');
+  };
+
   const handleApplyColor = (colorHex: string) => {
     setAccentColorInput(colorHex);
     setCustomColorText(colorHex);
@@ -1391,6 +1412,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
                 <span>Настройки</span>
               </button>
             </div>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={handleToggleThemeMode}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-text-primary hover:text-white transition-all"
+              title={isLight ? 'Переключить на тёмную тему' : 'Переключить на светлую тему'}
+            >
+              {isLight ? (
+                <>
+                  <Moon size={15} weight="bold" className="text-indigo-400" />
+                  <span className="hidden sm:inline">Тёмная тема</span>
+                </>
+              ) : (
+                <>
+                  <Sun size={15} weight="bold" className="text-amber-400" />
+                  <span className="hidden sm:inline">Светлая тема</span>
+                </>
+              )}
+            </button>
 
             {props.onLogout && (
               <button
@@ -1814,17 +1854,79 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               </div>
             </div>
 
-            {/* SECTION 2: ACCENT COLOR SELECTION */}
+            {/* SECTION 2: ACCENT COLOR & THEME MODE */}
             <div className="astryx-card p-4 sm:p-7 bg-[#161618] border border-white/10 rounded-3xl shadow-xl w-full max-w-full min-w-0 overflow-hidden">
               <div className="flex items-center gap-2 mb-2">
                 <Palette size={18} className="text-accent-blue" weight="bold" />
                 <h2 className="text-lg sm:text-xl font-bold text-white">
-                  Главный акцентный цвет сайта
+                  Оформление темы и акцентный цвет
                 </h2>
               </div>
               <p className="text-xs text-[#86868B] mb-5">
-                Мгновенно перекрашивает кнопки, подсветку, бейджи, иконки и свечение по всему сайту и в панели клиента.
+                Переключайте тему между тёмной (OLED Black) и светлой (Apple Light), а также меняйте акцентный цвет кнопок и элементов.
               </p>
+
+              {/* Theme Mode Selector (Dark / Light) */}
+              <div className="mb-6 p-4 rounded-2xl bg-[#1C1C1E] border border-white/10">
+                <span className="block text-xs font-semibold text-white mb-3">
+                  Режим темы оформления:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleSetThemeMode('dark')}
+                    className={`flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all ${
+                      !isLight
+                        ? 'border-accent-blue bg-accent-blue/15 shadow-lg ring-1 ring-accent-blue/50'
+                        : 'border-white/10 bg-black/40 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#000000] border border-white/20 flex items-center justify-center shrink-0">
+                      <Moon size={20} weight="fill" className="text-indigo-400" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                        Тёмная тема (OLED Dark)
+                        {!isLight && (
+                          <span className="text-[10px] bg-accent-blue/20 text-accent-blue px-2 py-0.5 rounded-full font-semibold">
+                            Активна
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-[#86868B] mt-0.5">
+                        Глубокий чёрный фон, неоновые акценты и стеклянный эффект
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSetThemeMode('light')}
+                    className={`flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all ${
+                      isLight
+                        ? 'border-accent-blue bg-accent-blue/15 shadow-lg ring-1 ring-accent-blue/50'
+                        : 'border-white/10 bg-black/40 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-black/10 flex items-center justify-center shrink-0 shadow-sm">
+                      <Sun size={20} weight="fill" className="text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                        Светлая тема (Apple Light)
+                        {isLight && (
+                          <span className="text-[10px] bg-accent-blue/20 text-accent-blue px-2 py-0.5 rounded-full font-semibold">
+                            Активна
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-[#86868B] mt-0.5">
+                        Чистый белый и светло-серый фон в стиле macOS / iOS
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
 
               {/* Color Presets */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 mb-5">

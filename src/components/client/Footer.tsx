@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Phone, Clock, ArrowUpRight, TelegramLogo, ChatCircleDots } from '@phosphor-icons/react';
 import { useSiteConfig } from '@/context/SiteConfigContext';
 import { TenantConfig } from '@/types/tenant';
+import { slugify } from '@/lib/slugify';
 
 interface FooterProps {
   tenant?: TenantConfig;
@@ -9,10 +11,13 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = '' }) => {
+  const navigate = useNavigate();
+  const { tenantSlug } = useParams<{ tenantSlug?: string }>();
   const { config } = useSiteConfig();
   const currentYear = new Date().getFullYear();
 
   const name = config.branding.name || propTenant?.name || 'AquaDrive';
+  const currentSlug = tenantSlug || slugify(name);
   const phone = config.contacts.phone || propTenant?.phone || '+7 (999) 000-00-00';
   const cleanPhone = phone.replace(/[^+\d]/g, '');
   const address = config.contacts.address || propTenant?.address || 'г. Москва, ул. Автозаводская, д. 23';
@@ -122,13 +127,21 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
             © {currentYear} {name}. Все права защищены.
           </span>
           <div className="flex items-center gap-4">
-            <span className="hover:text-white/80 transition-colors cursor-pointer">
+            <button
+              type="button"
+              onClick={() => navigate(`/s/${currentSlug}/privacy`)}
+              className="hover:text-white/80 transition-colors cursor-pointer text-left focus:outline-none"
+            >
               Политика конфиденциальности
-            </span>
+            </button>
             <span>·</span>
-            <span className="hover:text-white/80 transition-colors cursor-pointer">
+            <button
+              type="button"
+              onClick={() => navigate(`/s/${currentSlug}/privacy#sec-4`)}
+              className="hover:text-white/80 transition-colors cursor-pointer text-left focus:outline-none"
+            >
               Правила автомойки
-            </span>
+            </button>
           </div>
         </div>
       </div>

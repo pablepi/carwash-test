@@ -15,6 +15,7 @@ export const SiteConfigSchema = z.object({
     logoUrl: z.string().optional(),
   }),
   theme: z.object({
+    mode: z.enum(['dark', 'light']).default('dark'), // "dark" (по умолчанию) или "light"
     accentColor: z.string(), // Дефолт: "#10B981" (изумрудный мятный)
     accentHover: z.string(), // "#059669"
     textColor: z.string().default('#F5F5F7'), // Светлый контрастный Apple-стиль
@@ -107,6 +108,7 @@ export const defaultSiteConfig: SiteConfig = {
     logoUrl: '/favicon.svg',
   },
   theme: {
+    mode: 'dark',
     accentColor: '#10B981',
     accentHover: '#059669',
     textColor: '#F5F5F7',
