@@ -215,11 +215,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="astryx-card w-full max-w-lg bg-[#161618] border border-white/10 shadow-2xl p-5 sm:p-6 relative rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto">
+      <div className="astryx-card w-full max-w-lg bg-white dark:bg-[#161618] border border-black/10 dark:border-white/10 shadow-2xl p-5 sm:p-6 relative rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto text-[#1C1C1E] dark:text-[#F5F5F7]">
         {/* Header Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-[#86868B] hover:text-[#F5F5F7] p-1.5 rounded-full bg-[#1C1C1E] transition-colors z-20"
+          className="absolute top-4 right-4 text-[#86868B] hover:text-[#1C1C1E] dark:hover:text-[#F5F5F7] p-1.5 rounded-full bg-black/[0.05] dark:bg-[#1C1C1E] transition-colors z-20"
         >
           <X size={18} />
         </button>
@@ -228,10 +228,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           <Badge variant="blue" icon={<Lock size={12} weight="fill" />}>
             ОНЛАЙН-ЗАПИСЬ БЕЗ РЕГИСТРАЦИИ
           </Badge>
-          <h3 className="text-xl font-extrabold text-[#F5F5F7] tracking-tight mt-2">
+          <h3 className="text-xl font-extrabold text-[#1C1C1E] dark:text-[#F5F5F7] tracking-tight mt-2">
             Запись на автомойку
           </h3>
-          <p className="text-xs text-[#A1A1A6] mt-0.5">
+          <p className="text-xs text-[#636366] dark:text-[#A1A1A6] mt-0.5">
             Бронь слота подтверждается мгновенно в один клик.
           </p>
         </div>
@@ -246,10 +246,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Car Category Switcher inside Modal */}
           <div>
-            <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
+            <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
               Категория авто
             </label>
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#1C1C1E] border border-white/[0.08] rounded-xl">
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-black/[0.05] dark:bg-[#1C1C1E] border border-black/5 dark:border-white/[0.08] rounded-xl">
               {config.carCategories.map((cat) => {
                 const isSelected = selectedCarCategory === cat.id;
                 return (
@@ -260,7 +260,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     className={`py-2 px-1 text-center rounded-lg text-xs font-semibold transition-all select-none flex items-center justify-center gap-1 ${
                       isSelected
                         ? 'bg-accent-blue text-white shadow-sm'
-                        : 'text-[#86868B] hover:text-white'
+                        : 'text-[#636366] dark:text-[#86868B] hover:text-[#1C1C1E] dark:hover:text-white'
                     }`}
                   >
                     {isSelected && <Check size={11} weight="bold" />}
@@ -273,17 +273,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Service Selector */}
           <div>
-            <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
+            <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
               Услуга
             </label>
             <div className="relative">
               <select
                 value={selectedServiceId}
                 onChange={(e) => setSelectedServiceId(e.target.value)}
-                className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-[#F5F5F7] focus:outline-none focus:border-accent-blue appearance-none"
+                className="w-full bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-[#1C1C1E] dark:text-[#F5F5F7] focus:outline-none focus:border-accent-blue appearance-none"
               >
                 {config.services.map((s) => (
-                  <option key={s.id} value={s.id}>
+                  <option key={s.id} value={s.id} className="bg-white dark:bg-[#1C1C1E] text-[#1C1C1E] dark:text-[#F5F5F7]">
                     {s.name} — {s.prices[selectedCarCategory]} ₽ ({s.durationMinutes} мин)
                   </option>
                 ))}
@@ -293,7 +293,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           </div>
 
           {/* Interactive Date & Slot Selection right inside the modal */}
-          <div className="p-3.5 rounded-2xl bg-[#1C1C1E] border border-white/[0.08]">
+          <div className="p-3.5 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/[0.08]">
             <SlotPicker
               tenant={tenant}
               selectedService={adaptedServiceItem}
@@ -311,7 +311,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {selectedSlotTimeStr && (
             <div className="flex items-center justify-between text-xs font-mono px-1">
-              <span className="text-[#A1A1A6]">Выбранное время:</span>
+              <span className="text-[#636366] dark:text-[#A1A1A6]">Выбранное время:</span>
               <span className="font-bold text-accent-blue bg-accent-blue-subtle px-2.5 py-0.5 rounded-md border border-accent-blue/30">
                 {selectedSlotTimeStr}
               </span>
@@ -321,7 +321,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* Customer & Car Info */}
           <div className="space-y-3 pt-1">
             <div>
-              <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+              <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
                 Ваше имя
               </label>
               <div className="relative">
@@ -332,13 +332,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   placeholder="Александр"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                  className="w-full bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#1C1C1E] dark:text-[#F5F5F7] placeholder-[#8E8E93] dark:placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+              <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
                 Номер телефона
               </label>
               <div className="relative">
@@ -349,14 +349,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   placeholder="+7 (999) 000-00-00"
                   value={phone}
                   onChange={handlePhoneChange}
-                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-mono text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                  className="w-full bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-mono text-[#1C1C1E] dark:text-[#F5F5F7] placeholder-[#8E8E93] dark:placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+                <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
                   Марка и модель авто
                 </label>
                 <div className="relative">
@@ -367,13 +367,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     placeholder="BMW 5 / Camry"
                     value={carModel}
                     onChange={(e) => setCarModel(e.target.value)}
-                    className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                    className="w-full bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/[0.08] rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-[#1C1C1E] dark:text-[#F5F5F7] placeholder-[#8E8E93] dark:placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+                <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
                   Госномер (необязательно)
                 </label>
                 <input
@@ -381,17 +381,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   placeholder="А777АА 777"
                   value={carPlate}
                   onChange={(e) => setCarPlate(e.target.value)}
-                  className="w-full bg-[#1C1C1E] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm font-mono uppercase text-[#F5F5F7] placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
+                  className="w-full bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm font-mono uppercase text-[#1C1C1E] dark:text-[#F5F5F7] placeholder-[#8E8E93] dark:placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue"
                 />
               </div>
             </div>
           </div>
 
           {/* Pricing Summary */}
-          <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between">
+          <div className="pt-3 border-t border-black/10 dark:border-white/[0.08] flex items-center justify-between">
             <div>
-              <span className="block text-[10px] font-mono text-[#86868B] uppercase">К оплате при заезде:</span>
-              <span className="text-xl font-bold font-mono text-[#FFFFFF]">
+              <span className="block text-[10px] font-mono text-[#8E8E93] dark:text-[#86868B] uppercase">К оплате при заезде:</span>
+              <span className="text-xl font-bold font-mono text-[#1C1C1E] dark:text-[#FFFFFF]">
                 {activePrice.toLocaleString('ru-RU')} ₽
               </span>
             </div>

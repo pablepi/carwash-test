@@ -425,13 +425,13 @@ export const MyBooking: React.FC = () => {
   const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent(tenant.address)}`;
 
   return (
-    <div className="min-h-screen bg-[#000000] text-white flex flex-col justify-between pt-4 sm:pt-10">
+    <div className="min-h-screen bg-base-darkest text-text-primary flex flex-col justify-between pt-4 sm:pt-10 transition-colors duration-300">
       {/* Main Content Area */}
       <div className="mx-auto w-full max-w-3xl lg:max-w-4xl px-4 sm:px-6 mb-8 sm:mb-12">
         {/* Back Button */}
         <button
           onClick={() => navigate(`/s/${currentSlug}`)}
-          className="hidden sm:inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#A1A1A6] hover:text-white transition-colors mb-6"
+          className="hidden sm:inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#636366] dark:text-[#A1A1A6] hover:text-[#1C1C1E] dark:hover:text-white transition-colors mb-6"
         >
           <ArrowLeft size={16} /> На главную студии
         </button>
@@ -441,10 +441,10 @@ export const MyBooking: React.FC = () => {
           <Badge variant="blue" icon={<ShieldCheck size={14} weight="fill" />}>
             ПРОВЕРКА БРОНИРОВАНИЯ
           </Badge>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight mt-2.5 mb-2">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-[#1C1C1E] dark:text-white tracking-tight mt-2.5 mb-2">
             Моя запись
           </h1>
-          <p className="text-xs sm:text-sm text-[#A1A1A6] max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#636366] dark:text-[#A1A1A6] max-w-2xl leading-relaxed">
             Просмотр деталей вашего визита, времени готовности бокса и моментальное управление бронью без регистрации.
           </p>
         </div>
@@ -453,9 +453,9 @@ export const MyBooking: React.FC = () => {
         {!bookingData ? (
           <div className="space-y-4 sm:space-y-5">
             {/* Main Search Card with Tabs */}
-            <div className="astryx-card p-5 sm:p-8 bg-[#161618] border border-white/10 rounded-3xl shadow-2xl">
+            <div className="astryx-card p-5 sm:p-8 bg-white dark:bg-[#161618] border border-black/10 dark:border-white/10 rounded-3xl shadow-2xl">
               {/* Compact Mode Switcher Tabs */}
-              <div className="flex gap-1.5 p-1 rounded-2xl bg-[#1C1C1E] border border-white/10 w-fit mb-5">
+              <div className="flex gap-1.5 p-1 rounded-2xl bg-black/[0.05] dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 w-fit mb-5">
                 <button
                   type="button"
                   onClick={() => {
@@ -465,7 +465,7 @@ export const MyBooking: React.FC = () => {
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
                     searchTab === 'plate'
                       ? 'bg-accent-blue text-white shadow-sm'
-                      : 'text-[#A1A1A6] hover:text-white'
+                      : 'text-[#636366] dark:text-[#A1A1A6] hover:text-[#1C1C1E] dark:hover:text-white'
                   }`}
                 >
                   <Car size={16} weight={searchTab === 'plate' ? 'fill' : 'regular'} />
@@ -480,7 +480,7 @@ export const MyBooking: React.FC = () => {
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
                     searchTab === 'token'
                       ? 'bg-accent-blue text-white shadow-sm'
-                      : 'text-[#A1A1A6] hover:text-white'
+                      : 'text-[#636366] dark:text-[#A1A1A6] hover:text-[#1C1C1E] dark:hover:text-white'
                   }`}
                 >
                   <Ticket size={16} weight={searchTab === 'token' ? 'fill' : 'regular'} />
@@ -501,7 +501,7 @@ export const MyBooking: React.FC = () => {
                       setInputValue(searchTab === 'plate' ? val.toUpperCase() : val);
                       setNotFound(false);
                     }}
-                    className="w-full bg-[#1C1C1E] border border-white/15 rounded-2xl px-4 py-3.5 pl-11 text-sm sm:text-base text-white placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue transition-colors font-bold uppercase tracking-wider"
+                    className="w-full bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/15 rounded-2xl px-4 py-3.5 pl-11 text-sm sm:text-base text-[#1C1C1E] dark:text-white placeholder-[#8E8E93] dark:placeholder-[#6E6E73] focus:outline-none focus:border-accent-blue transition-colors font-bold uppercase tracking-wider"
                   />
                   {searchTab === 'plate' ? (
                     <Car size={18} className="absolute left-4 top-4 text-[#86868B]" />
@@ -533,17 +533,17 @@ export const MyBooking: React.FC = () => {
               )}
 
               {/* Guidance line */}
-              <p className="mt-3 text-xs text-[#86868B] leading-relaxed">
+              <p className="mt-3 text-xs text-[#636366] dark:text-[#86868B] leading-relaxed">
                 Введите госномер автомобиля или номер вашей брони (например, AD-1018) для проверки актуального статуса.
               </p>
             </div>
 
             {/* Help bar with administrator phone */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:px-5 sm:py-3.5 rounded-2xl bg-[#161618] border border-white/10 text-xs text-[#A1A1A6]">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:px-5 sm:py-3.5 rounded-2xl bg-white dark:bg-[#161618] border border-black/10 dark:border-white/10 text-xs text-[#636366] dark:text-[#A1A1A6]">
               <span>Не получается найти бронь или изменились планы?</span>
               <a
                 href={`tel:${tenant.phone.replace(/[^+\d]/g, '')}`}
-                className="inline-flex items-center gap-1.5 text-white font-semibold hover:text-accent-blue transition-colors shrink-0"
+                className="inline-flex items-center gap-1.5 text-[#1C1C1E] dark:text-white font-semibold hover:text-accent-blue transition-colors shrink-0"
               >
                 <Phone size={15} weight="fill" className="text-accent-blue" />
                 <span>Позвонить администратору</span>
@@ -553,7 +553,7 @@ export const MyBooking: React.FC = () => {
           </div>
         ) : (
           /* Active Booking Details Card */
-          <div className="astryx-card p-5 sm:p-8 md:p-10 bg-[#161618] border border-white/10 rounded-3xl shadow-2xl space-y-6 animate-fade-in">
+          <div className="astryx-card p-5 sm:p-8 md:p-10 bg-white dark:bg-[#161618] border border-black/10 dark:border-white/10 rounded-3xl shadow-2xl space-y-6 animate-fade-in text-[#1C1C1E] dark:text-white">
             {cancelSuccessMsg && (
               <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
                 <CheckCircle size={18} className="shrink-0 text-emerald-400" />
@@ -561,12 +561,12 @@ export const MyBooking: React.FC = () => {
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-white/10">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-black/10 dark:border-white/10">
               <div>
                 <span className="text-[11px] uppercase tracking-wider text-accent-blue font-semibold block mb-1">
                   Номер бронирования: #{bookingData.booking_number}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-white">
+                <h3 className="text-xl sm:text-2xl font-extrabold text-[#1C1C1E] dark:text-white">
                   {bookingData.service_title}
                 </h3>
               </div>
@@ -592,7 +592,7 @@ export const MyBooking: React.FC = () => {
             </div>
 
             {/* Live Car Status Tracker & Auto-Sync Card */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-4">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5">
@@ -609,7 +609,7 @@ export const MyBooking: React.FC = () => {
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                     )}
                   </span>
-                  <span className="text-xs uppercase tracking-wider text-white/70 font-bold">
+                  <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/70 font-bold">
                     Текущий статус машины в боксе
                   </span>
                 </div>
@@ -619,7 +619,7 @@ export const MyBooking: React.FC = () => {
                   type="button"
                   onClick={() => refreshBookingStatus(false)}
                   disabled={isRefreshingStatus}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] text-xs font-semibold text-white/90 hover:text-white transition-all active:scale-95 border border-white/10"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/[0.05] hover:bg-black/[0.10] dark:bg-white/[0.06] dark:hover:bg-white/[0.14] text-xs font-semibold text-[#1C1C1E] dark:text-white/90 transition-all active:scale-95 border border-black/10 dark:border-white/10"
                   title="Проверить статус"
                 >
                   <ArrowsClockwise
@@ -728,17 +728,17 @@ export const MyBooking: React.FC = () => {
 
             {/* Detailed Grid Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1">
-                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
+              <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1">
+                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
                   Автомобиль
                 </span>
-                <span className="text-sm sm:text-base font-bold text-white">
+                <span className="text-sm sm:text-base font-bold text-[#1C1C1E] dark:text-white">
                   {bookingData.car_model}
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1">
-                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
+              <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1">
+                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
                   Дата и время заезда
                 </span>
                 <span className="text-sm sm:text-base font-bold text-accent-blue">
@@ -746,29 +746,29 @@ export const MyBooking: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1">
-                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
+              <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1">
+                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
                   Назначенный бокс
                 </span>
-                <span className="text-sm sm:text-base font-bold text-white">
+                <span className="text-sm sm:text-base font-bold text-[#1C1C1E] dark:text-white">
                   {bookingData.box_name}
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1">
-                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
+              <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1">
+                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
                   К оплате при заезде
                 </span>
-                <span className="text-xl sm:text-2xl font-extrabold text-white tracking-wide">
+                <span className="text-xl sm:text-2xl font-extrabold text-[#1C1C1E] dark:text-white tracking-wide">
                   {Number(bookingData.total_price || 0).toLocaleString('ru-RU')} ₽
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#1C1C1E] border border-white/10 space-y-1 sm:col-span-2">
-                <span className="text-xs uppercase tracking-wider text-white/60 font-semibold block">
+              <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1 sm:col-span-2">
+                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
                   Адрес боксов
                 </span>
-                <span className="text-xs sm:text-sm font-medium text-white block">
+                <span className="text-xs sm:text-sm font-medium text-[#1C1C1E] dark:text-white block">
                   {bookingData.address || tenant.address}
                 </span>
                 <a
@@ -784,7 +784,7 @@ export const MyBooking: React.FC = () => {
             </div>
 
             {/* Actions footer */}
-            <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="pt-4 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -794,7 +794,7 @@ export const MyBooking: React.FC = () => {
                   setInputValue('');
                   navigate(`/s/${currentSlug}/my-booking`, { replace: true });
                 }}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] text-xs font-semibold text-white transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-black/[0.05] hover:bg-black/[0.10] dark:bg-white/[0.08] dark:hover:bg-white/[0.16] text-xs font-semibold text-[#1C1C1E] dark:text-white transition-colors border border-black/10 dark:border-transparent"
               >
                 ← Искать по другому номеру или авто
               </button>

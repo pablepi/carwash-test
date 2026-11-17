@@ -152,10 +152,10 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
         {/* Calendar strip */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] text-[#F5F5F7] uppercase tracking-wider font-semibold">
+            <span className="text-[11px] text-[#1C1C1E] dark:text-[#F5F5F7] uppercase tracking-wider font-semibold">
               Дата заезда
             </span>
-            <span className="text-xs text-white capitalize font-semibold tracking-wide">
+            <span className="text-xs text-[#1C1C1E] dark:text-white capitalize font-semibold tracking-wide">
               {format(selectedDate, 'LLLL yyyy', { locale: ru })}
             </span>
           </div>
@@ -176,13 +176,13 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
                   className={`flex flex-col items-center justify-center min-w-[52px] py-2 px-1.5 rounded-xl transition-all duration-150 active:scale-95 border shrink-0 ${
                     isSelected
                       ? 'bg-accent-blue text-white border-accent-blue shadow-[0_0_16px_-3px_var(--apple-accent-blue)] font-bold'
-                      : 'bg-[#1C1C1E] text-white border-white/15 hover:border-white/30 hover:bg-[#252528]'
+                      : 'bg-white dark:bg-[#1C1C1E] text-[#1C1C1E] dark:text-white border-black/10 dark:border-white/15 hover:border-black/20 dark:hover:border-white/30 hover:bg-black/[0.02] dark:hover:bg-[#252528]'
                   }`}
                 >
-                  <span className={`text-[11px] uppercase tracking-wider font-semibold ${isSelected ? 'text-white' : 'text-white/70'}`}>
+                  <span className={`text-[11px] uppercase tracking-wider font-semibold ${isSelected ? 'text-white' : 'text-[#636366] dark:text-white/70'}`}>
                     {dayName}
                   </span>
-                  <span className="text-base font-bold text-white tabular-nums mt-0.5">
+                  <span className={`text-base font-bold tabular-nums mt-0.5 ${isSelected ? 'text-white' : 'text-[#1C1C1E] dark:text-white'}`}>
                     {dayNum}
                   </span>
                 </button>
@@ -194,21 +194,21 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
         {/* Slot grid */}
         <div>
           <div className="flex items-center justify-between mb-2.5 flex-wrap gap-2">
-            <span className="text-[11px] font-mono text-[#F5F5F7] uppercase tracking-wider font-semibold">
+            <span className="text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] uppercase tracking-wider font-semibold">
               Свободные слоты
             </span>
-            <div className="flex items-center gap-2.5 text-[10px] font-mono text-[#A1A1A6]">
+            <div className="flex items-center gap-2.5 text-[10px] font-mono text-[#636366] dark:text-[#A1A1A6]">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-sm bg-[#1C1C1E] border border-white/10" /> Свободно
+                <span className="w-2 h-2 rounded-sm bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10" /> Свободно
               </span>
-              <span className="flex items-center gap-1 text-accent-blue">
+              <span className="flex items-center gap-1 text-accent-blue font-bold">
                 <span className="w-2 h-2 rounded-sm bg-accent-blue" /> Выбрано
               </span>
             </div>
           </div>
 
           {!dayAvailability.isWorkDay ? (
-            <div className="p-6 text-center text-[#86868B] font-mono text-xs border border-dashed border-white/10 rounded-xl">
+            <div className="p-6 text-center text-[#636366] dark:text-[#86868B] font-mono text-xs border border-dashed border-black/10 dark:border-white/10 rounded-xl">
               Мойка не работает в этот день
             </div>
           ) : (
@@ -227,13 +227,13 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
                       isSelected
                         ? 'bg-accent-blue text-white border-accent-blue shadow-[0_0_16px_-3px_var(--apple-accent-blue)] font-bold ring-2 ring-accent-blue/30'
                         : isDisabled
-                        ? 'bg-black/50 text-[#48484A] border-white/[0.04] cursor-not-allowed line-through opacity-40'
-                        : 'bg-[#1C1C1E] text-white border-white/15 hover:border-accent-blue/50 hover:bg-[#2C2C2E] active:scale-95'
+                        ? 'bg-black/[0.04] dark:bg-black/50 text-[#8E8E93] dark:text-[#48484A] border-black/5 dark:border-white/[0.04] cursor-not-allowed line-through opacity-50'
+                        : 'bg-white dark:bg-[#1C1C1E] text-[#1C1C1E] dark:text-white border-black/10 dark:border-white/15 hover:border-accent-blue/50 hover:bg-black/[0.02] dark:hover:bg-[#2C2C2E] active:scale-95'
                     }`}
                   >
                     <span>{slot.timeStr}</span>
                     {slot.isAvailable && slot.boxName && (
-                      <span className={`text-[9px] mt-0.5 font-normal ${isSelected ? 'text-white/90 font-medium' : 'text-[#86868B]'}`}>
+                      <span className={`text-[9px] mt-0.5 font-normal ${isSelected ? 'text-white/90 font-medium' : 'text-[#636366] dark:text-[#86868B]'}`}>
                         {slot.boxName}
                       </span>
                     )}

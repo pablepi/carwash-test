@@ -7,12 +7,13 @@ export default {
     extend: {
       colors: {
         base: {
-          darkest: '#000000',
-          elevated: '#161618',
-          surface: '#1C1C1E',
-          hover: '#2C2C2E',
-          border: 'rgba(255, 255, 255, 0.08)',
-          'border-strong': 'rgba(255, 255, 255, 0.14)',
+          darkest: 'var(--apple-bg-base, #000000)',
+          elevated: 'var(--apple-bg-elevated, #161618)',
+          card: 'var(--apple-bg-card, #161618)',
+          surface: 'var(--apple-bg-surface, #1C1C1E)',
+          hover: 'var(--apple-bg-hover, #2C2C2E)',
+          border: 'var(--apple-border-subtle, rgba(255, 255, 255, 0.08))',
+          'border-strong': 'var(--apple-border-medium, rgba(255, 255, 255, 0.14))',
         },
         accent: {
           blue: 'var(--apple-accent-blue, #00C7BE)',
@@ -23,10 +24,10 @@ export default {
           'turquoise-subtle': 'var(--apple-accent-turquoise-subtle, rgba(0, 199, 190, 0.15))',
         },
         text: {
-          primary: '#F5F5F7',
-          secondary: '#86868B',
-          tertiary: '#A1A1A6',
-          muted: '#6E6E73',
+          primary: 'var(--apple-text-primary, #F5F5F7)',
+          secondary: 'var(--apple-text-secondary, #86868B)',
+          tertiary: 'var(--apple-text-tertiary, #A1A1A6)',
+          muted: 'var(--apple-text-muted, #6E6E73)',
         },
         status: {
           pending: '#F59E0B',

@@ -121,7 +121,7 @@ export const FloatingBottomNav: React.FC<FloatingBottomNavProps> = ({ onOpenBook
                   key={item.id}
                   onClick={() => handleNavClick(item)}
                   className={`group relative flex flex-1 flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-150 active:scale-95 focus:outline-none ${
-                    item.isActive ? 'text-accent-blue' : 'text-[#86868B] hover:text-[#F5F5F7]'
+                    item.isActive ? 'text-accent-blue' : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   <div className="relative">
@@ -135,8 +135,8 @@ export const FloatingBottomNav: React.FC<FloatingBottomNavProps> = ({ onOpenBook
                     )}
                   </div>
                   <span
-                    className={`mt-1 text-[11px] font-sans font-medium tracking-tight ${
-                      item.isActive ? 'text-[#F5F5F7] font-semibold' : 'text-[#86868B]'
+                    className={`mt-1 text-[11px] font-sans tracking-tight transition-colors ${
+                      item.isActive ? 'text-text-primary font-bold' : 'text-text-secondary font-medium'
                     }`}
                   >
                     {item.label}

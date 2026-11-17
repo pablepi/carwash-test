@@ -27,26 +27,26 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
   const maxUrl = (config.contacts as any).maxUrl || config.contacts.whatsappUrl || 'https://max.ru';
 
   return (
-    <footer className={`w-full border-t border-white/10 bg-[#0A0A0C]/90 text-white backdrop-blur-xl mt-10 sm:mt-16 ${className}`}>
+    <footer className={`w-full border-t border-black/[0.08] dark:border-white/10 bg-white dark:bg-[#0A0A0C]/90 text-text-primary backdrop-blur-xl mt-10 sm:mt-16 transition-colors duration-300 ${className}`}>
       <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-10 pb-32 sm:pb-16">
         {/* Main Footer Grid: 3 balanced columns */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 pb-10 border-b border-white/10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 pb-10 border-b border-black/[0.08] dark:border-white/10">
           
           {/* Column 1: Studio Info & Schedule */}
           <div className="flex flex-col items-start gap-3">
             <span className="text-[11px] font-sans uppercase tracking-widest text-accent-blue font-semibold">
               АВТОМОЙКА И ДЕТЕЙЛИНГ
             </span>
-            <h3 className="text-xl font-extrabold text-white tracking-tight">
+            <h3 className="text-xl font-extrabold text-[#1C1C1E] dark:text-white tracking-tight">
               {name}
             </h3>
-            <p className="text-xs text-[#A1A1A6] leading-relaxed max-w-sm">
+            <p className="text-xs text-[#636366] dark:text-[#A1A1A6] leading-relaxed max-w-sm">
               {config.branding.heroSubtitle || 'Бережная мойка, умягчённая вода и сушка тёплым воздухом без контакта жёстких тряпок.'}
             </p>
 
-            <div className="flex items-center gap-2 mt-2 px-3.5 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs text-white">
+            <div className="flex items-center gap-2 mt-2 px-3.5 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/10 text-xs text-[#1C1C1E] dark:text-white">
               <Clock size={15} className="text-accent-blue shrink-0" weight="bold" />
-              <span className="font-sans font-medium text-xs text-white tracking-wide">
+              <span className="font-sans font-medium text-xs text-[#1C1C1E] dark:text-white tracking-wide">
                 {hours}
               </span>
             </div>
@@ -58,16 +58,16 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
               АДРЕС И ПРОЕЗД
             </span>
 
-            <div className="flex items-start gap-2.5 text-sm text-white/95 leading-relaxed">
+            <div className="flex items-start gap-2.5 text-sm text-[#1C1C1E] dark:text-white/95 leading-relaxed">
               <MapPin size={18} className="text-accent-blue shrink-0 mt-0.5" weight="fill" />
-              <span>{address}</span>
+              <span className="font-medium text-[#1C1C1E] dark:text-white/95">{address}</span>
             </div>
 
             <a
               href={yandexUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 px-3.5 py-2 rounded-xl transition-all duration-150 active:scale-95"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1C1C1E] dark:text-white bg-black/[0.05] hover:bg-black/[0.10] dark:bg-white/[0.08] dark:hover:bg-white/[0.16] border border-black/10 dark:border-white/15 px-3.5 py-2 rounded-xl transition-all duration-150 active:scale-95 shadow-sm"
             >
               <span>Построить маршрут</span>
               <ArrowUpRight size={13} weight="bold" />
@@ -82,13 +82,13 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
 
             <a
               href={`tel:${cleanPhone}`}
-              className="inline-flex items-center gap-2 text-base sm:text-lg font-bold font-sans text-white hover:text-accent-blue transition-colors"
+              className="inline-flex items-center gap-2 text-base sm:text-lg font-bold font-sans text-[#1C1C1E] dark:text-white hover:text-accent-blue transition-colors"
             >
               <Phone size={18} weight="fill" className="text-accent-blue" />
               <span>{phone}</span>
             </a>
 
-            <p className="text-xs text-[#A1A1A6]">
+            <p className="text-xs text-[#636366] dark:text-[#A1A1A6]">
               Ответим на вопросы, проконсультируем по услугам и запишем авто:
             </p>
 
@@ -100,7 +100,7 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telegram"
-                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 text-[11px] font-semibold text-white transition-all duration-150 active:scale-95"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-black/[0.05] hover:bg-black/[0.10] dark:bg-white/[0.08] dark:hover:bg-white/[0.16] border border-black/10 dark:border-white/15 text-[11px] font-semibold text-[#1C1C1E] dark:text-white transition-all duration-150 active:scale-95 shadow-sm"
               >
                 <TelegramLogo size={15} weight="fill" className="shrink-0 text-accent-blue" />
                 <span className="truncate">Telegram</span>
@@ -112,7 +112,7 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="MAX"
-                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 text-[11px] font-semibold text-white transition-all duration-150 active:scale-95"
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-black/[0.05] hover:bg-black/[0.10] dark:bg-white/[0.08] dark:hover:bg-white/[0.16] border border-black/10 dark:border-white/15 text-[11px] font-semibold text-[#1C1C1E] dark:text-white transition-all duration-150 active:scale-95 shadow-sm"
               >
                 <ChatCircleDots size={15} weight="fill" className="shrink-0 text-accent-blue" />
                 <span className="truncate">MAX</span>
@@ -122,7 +122,7 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
         </div>
 
         {/* Bottom copyright line */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50 font-sans">
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#8E8E93] dark:text-white/50 font-sans">
           <span>
             © {currentYear} {name}. Все права защищены.
           </span>
@@ -130,7 +130,7 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
             <button
               type="button"
               onClick={() => navigate(`/s/${currentSlug}/privacy`)}
-              className="hover:text-white/80 transition-colors cursor-pointer text-left focus:outline-none"
+              className="hover:text-[#1C1C1E] dark:hover:text-white/80 transition-colors cursor-pointer text-left focus:outline-none"
             >
               Политика конфиденциальности
             </button>
@@ -138,7 +138,7 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
             <button
               type="button"
               onClick={() => navigate(`/s/${currentSlug}/privacy#sec-4`)}
-              className="hover:text-white/80 transition-colors cursor-pointer text-left focus:outline-none"
+              className="hover:text-[#1C1C1E] dark:hover:text-white/80 transition-colors cursor-pointer text-left focus:outline-none"
             >
               Правила автомойки
             </button>

@@ -28,6 +28,7 @@
   --apple-text-primary: #F5F5F7;
   --apple-text-secondary: #86868B;
   --apple-text-tertiary: #A1A1A6;
+  --apple-text-muted: #6E6E73;
 
   --safe-area-bottom: env(safe-area-inset-bottom, 12px);
   --font-sans: 'Questrial', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -39,9 +40,9 @@ html.light, [data-theme="light"] {
   color-scheme: light;
   --apple-bg-base: #F2F2F7;
   --apple-bg-card: #FFFFFF;
-  --apple-bg-elevated: #E5E5EA;
-  --apple-bg-surface: #D1D1D6;
-  --apple-bg-hover: #E5E5EA;
+  --apple-bg-elevated: #FFFFFF;
+  --apple-bg-surface: #E5E5EA;
+  --apple-bg-hover: #D1D1D6;
 
   --apple-border-subtle: rgba(0, 0, 0, 0.08);
   --apple-border-medium: rgba(0, 0, 0, 0.16);
@@ -50,6 +51,7 @@ html.light, [data-theme="light"] {
   --apple-text-primary: #1C1C1E;
   --apple-text-secondary: #636366;
   --apple-text-tertiary: #8E8E93;
+  --apple-text-muted: #8E8E93;
 }
 
 @media (prefers-reduced-motion: reduce) {

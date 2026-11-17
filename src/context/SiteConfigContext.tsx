@@ -67,14 +67,15 @@ export const applyThemeToDocument = (theme: SiteConfig['theme'], meta?: SiteConf
   if (isLight) {
     root.style.setProperty('--apple-bg-base', '#F2F2F7');
     root.style.setProperty('--apple-bg-card', '#FFFFFF');
-    root.style.setProperty('--apple-bg-elevated', '#E5E5EA');
-    root.style.setProperty('--apple-bg-surface', '#D1D1D6');
+    root.style.setProperty('--apple-bg-elevated', '#FFFFFF');
+    root.style.setProperty('--apple-bg-surface', '#F2F2F7');
     root.style.setProperty('--apple-bg-hover', '#E5E5EA');
     root.style.setProperty('--apple-border-subtle', 'rgba(0, 0, 0, 0.08)');
     root.style.setProperty('--apple-border-medium', 'rgba(0, 0, 0, 0.16)');
     root.style.setProperty('--apple-text-primary', '#1C1C1E');
     root.style.setProperty('--apple-text-secondary', '#636366');
     root.style.setProperty('--apple-text-tertiary', '#8E8E93');
+    root.style.setProperty('--apple-text-muted', '#8E8E93');
   } else {
     root.style.setProperty('--apple-bg-base', theme.bgBase || '#000000');
     root.style.setProperty('--apple-bg-card', theme.cardBg || '#161618');

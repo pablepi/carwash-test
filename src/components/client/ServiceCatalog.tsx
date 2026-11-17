@@ -84,7 +84,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
           </div>
 
           {/* Car Category Switcher: Apple HIG Segmented Control */}
-          <div className="flex items-center gap-1 p-1 bg-[#161618] border border-white/[0.08] rounded-2xl self-start sm:self-auto shadow-inner">
+          <div className="flex items-center gap-1 p-1 bg-black/[0.05] dark:bg-[#161618] border border-black/5 dark:border-white/[0.08] rounded-2xl self-start sm:self-auto shadow-inner">
             {config.carCategories.map((cat) => {
               const isSelected = selectedCarCategory === cat.id;
               return (
@@ -94,7 +94,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
                   className={`relative px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 select-none flex items-center gap-1.5 ${
                     isSelected
                       ? 'bg-accent-blue text-white shadow-md'
-                      : 'text-[#86868B] hover:text-[#FFFFFF]'
+                      : 'text-[#636366] dark:text-[#86868B] hover:text-[#1C1C1E] dark:hover:text-[#FFFFFF]'
                   }`}
                 >
                   {isSelected && <Check size={12} weight="bold" className="shrink-0" />}
@@ -106,15 +106,15 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
         </div>
 
         {/* Category filter tabs */}
-        <div className="flex gap-1.5 p-1 rounded-xl bg-[#161618] border border-white/[0.08] self-start overflow-x-auto max-w-full">
+        <div className="flex gap-1.5 p-1 rounded-xl bg-black/[0.05] dark:bg-[#161618] border border-black/5 dark:border-white/[0.08] self-start overflow-x-auto max-w-full">
           {filterTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveFilter(tab.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
                 activeFilter === tab.id
-                  ? 'bg-white/10 text-[#FFFFFF] shadow-sm'
-                  : 'text-[#86868B] hover:text-[#FFFFFF]'
+                  ? 'bg-white text-[#1C1C1E] shadow-sm border border-black/5 dark:bg-white/10 dark:text-[#FFFFFF] dark:border-transparent'
+                  : 'text-[#636366] dark:text-[#86868B] hover:text-[#1C1C1E] dark:hover:text-[#FFFFFF]'
               }`}
             >
               {tab.label}
@@ -133,42 +133,42 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
             <div
               key={service.id}
               onClick={() => handleServiceClick(service)}
-              className={`astryx-card p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
+              className={`astryx-card p-4 sm:p-5 cursor-pointer transition-all duration-200 bg-white dark:bg-[#161618] border border-black/10 dark:border-white/10 ${
                 isSelected
-                  ? 'border-accent-blue bg-[#1C1C1E] shadow-[0_0_20px_-4px_var(--apple-accent-blue)] ring-1 ring-accent-blue'
-                  : 'hover:border-white/20'
+                  ? 'border-accent-blue bg-white dark:bg-[#1C1C1E] shadow-[0_0_20px_-4px_var(--apple-accent-blue)] ring-1 ring-accent-blue'
+                  : 'hover:border-black/20 dark:hover:border-white/20'
               }`}
             >
               {/* Top: title + duration badge */}
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm sm:text-base font-bold text-[#FFFFFF] tracking-tight">
+                    <h3 className="text-sm sm:text-base font-bold text-[#1C1C1E] dark:text-[#FFFFFF] tracking-tight">
                       {service.name}
                     </h3>
-                    <div className="flex items-center gap-1.5 text-xs font-mono text-[#FFFFFF] bg-[#242426] px-2.5 py-0.5 rounded-md border border-white/15 shrink-0">
+                    <div className="flex items-center gap-1.5 text-xs font-mono text-[#1C1C1E] dark:text-[#FFFFFF] bg-black/[0.04] dark:bg-[#242426] px-2.5 py-0.5 rounded-md border border-black/10 dark:border-white/15 shrink-0">
                       <Clock size={12} className="text-accent-blue" />
-                      <span className="tabular-nums font-semibold text-[#FFFFFF]">
+                      <span className="tabular-nums font-semibold text-[#1C1C1E] dark:text-[#FFFFFF]">
                         {formatDuration(service.durationMinutes)}
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-[#E5E5EA] line-clamp-2 mt-1.5 leading-relaxed font-normal">
+                  <p className="text-xs text-[#636366] dark:text-[#E5E5EA] line-clamp-2 mt-1.5 leading-relaxed font-normal">
                     {service.description}
                   </p>
                 </div>
               </div>
 
               {/* Bottom: tags + dynamic price + action button */}
-              <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-white/[0.1]">
+              <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-black/[0.08] dark:border-white/[0.1]">
                 <div className="flex flex-wrap gap-1.5 min-w-0 flex-1">
                   {service.badge && (
                     <Badge variant="blue">
-                      <span className="text-[#FFFFFF]">{service.badge}</span>
+                      <span>{service.badge}</span>
                     </Badge>
                   )}
                   <Badge variant="neutral">
-                    <span className="text-[#FFFFFF]">
+                    <span>
                       {config.carCategories.find((c) => c.id === selectedCarCategory)?.name}
                     </span>
                   </Badge>
@@ -176,10 +176,10 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
 
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <span className="block text-[10px] font-mono text-[#86868B] uppercase tracking-wider font-semibold">
+                    <span className="block text-[10px] font-mono text-[#8E8E93] dark:text-[#86868B] uppercase tracking-wider font-semibold">
                       Стоимость
                     </span>
-                    <span className="font-mono text-base sm:text-lg font-bold text-[#FFFFFF] tabular-nums transition-all">
+                    <span className="font-mono text-base sm:text-lg font-bold text-[#1C1C1E] dark:text-[#FFFFFF] tabular-nums transition-all">
                       {currentPrice.toLocaleString('ru-RU')}&nbsp;₽
                     </span>
                   </div>
