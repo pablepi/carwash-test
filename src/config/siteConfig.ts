@@ -31,6 +31,9 @@ export const SiteConfigSchema = z.object({
     telegramUrl: z.string().optional(),
     whatsappUrl: z.string().optional(),
     maxUrl: z.string().optional(), // Мессенджер MAX
+    email: z.string().optional(), // Email для обращений и отзыва согласий
+    legalEntity: z.string().optional(), // Наименование юрлица или ИП (Оператор 152-ФЗ)
+    inn: z.string().optional(), // ИНН оператора
   }),
   workflow: z.object({
     boxesCount: z.number().min(1).default(2), // Количество боксов (например, 2)
@@ -124,6 +127,9 @@ export const defaultSiteConfig: SiteConfig = {
     telegramUrl: 'https://t.me/aquadrive_wash',
     whatsappUrl: 'https://wa.me/79990000000',
     maxUrl: 'https://max.ru/aquadrive',
+    email: 'info@aquadrive.ru',
+    legalEntity: 'ИП Смирнов А. В.',
+    inn: '772501234567',
   },
   workflow: {
     boxesCount: 2,

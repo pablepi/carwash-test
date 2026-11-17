@@ -809,6 +809,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const [contactsYandex, setContactsYandex] = useState(siteConfig.contacts.yandexMapsUrl);
   const [contactsTelegram, setContactsTelegram] = useState(siteConfig.contacts.telegramUrl || '');
   const [contactsMax, setContactsMax] = useState((siteConfig.contacts as any).maxUrl || siteConfig.contacts.whatsappUrl || '');
+  const [contactsEmail, setContactsEmail] = useState(siteConfig.contacts.email || 'info@aquadrive.ru');
+  const [contactsLegalEntity, setContactsLegalEntity] = useState(siteConfig.contacts.legalEntity || 'ИП Смирнов А. В.');
+  const [contactsInn, setContactsInn] = useState(siteConfig.contacts.inn || '');
 
   // Workflow states: Boxes count, hours, buffer, slot step
   const [boxesCountInput, setBoxesCountInput] = useState<number>(siteConfig.workflow.boxesCount || 2);
@@ -1224,6 +1227,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
         telegramUrl: contactsTelegram || undefined,
         whatsappUrl: contactsMax || undefined,
         maxUrl: contactsMax || undefined,
+        email: contactsEmail.trim() || undefined,
+        legalEntity: contactsLegalEntity.trim() || undefined,
+        inn: contactsInn.trim() || undefined,
       },
       workflow: {
         ...siteConfig.workflow,
@@ -2092,6 +2098,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
                     value={contactsMax}
                     onChange={(e) => setContactsMax(e.target.value)}
                     placeholder="https://max.ru/aquadrive"
+                    className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
+                    Email студии (для Политики и обращений)
+                  </label>
+                  <input
+                    type="email"
+                    value={contactsEmail}
+                    onChange={(e) => setContactsEmail(e.target.value)}
+                    placeholder="info@aquadrive.ru"
+                    className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
+                    Юрлицо / ИП (Оператор 152-ФЗ в Политике)
+                  </label>
+                  <input
+                    type="text"
+                    value={contactsLegalEntity}
+                    onChange={(e) => setContactsLegalEntity(e.target.value)}
+                    placeholder="ИП Смирнов А. В. или ООО «АкваДрайв»"
+                    className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
+                    ИНН оператора (для Политики, необязательно)
+                  </label>
+                  <input
+                    type="text"
+                    value={contactsInn}
+                    onChange={(e) => setContactsInn(e.target.value)}
+                    placeholder="772501234567"
                     className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-accent-blue"
                   />
                 </div>
