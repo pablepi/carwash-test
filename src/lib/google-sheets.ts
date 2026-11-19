@@ -746,3 +746,149 @@ function jsonResponse(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 `;
+
+/**
+ * Готовый код для Яндекс Облака (Yandex Cloud Functions на Python 3.11).
+ * Бесплатно до 1 млн вызовов в месяц.
+ * Принимает бронирования, синхронизирует статусы и опционально шлет уведомления в Telegram.
+ */
+export const YANDEX_CLOUD_FUNCTION_TEMPLATE = `# Yandex Cloud Serverless Function (Python 3.11 / 3.12)
+# Точка входа: index.handler
+# Установите галочку "Публичная функция" в Yandex Cloud
+
+import json
+import os
+import base64
+import urllib.request
+from datetime import datetime
+
+_MEMORY = {
+    'bookings': [],
+    'config': None
+}
+
+CORS_HEADERS = {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+}
+
+def send_tg_notification(text):
+    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+    if not bot_token or not chat_id:
+        return
+    try:
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        data = json.dumps({'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML'}).encode('utf-8')
+        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        print(f"Telegram alert error: {e}")
+
+def handler(event, context):
+    method = event.get('httpMethod', 'GET').upper()
+    if method == 'OPTIONS':
+        return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'status': 'ok'})}
+
+    query = event.get('queryStringParameters') or {}
+    body = {}
+    if method == 'POST':
+        raw = event.get('body', '')
+        if event.get('isBase64Encoded', False):
+            try:
+                raw = base64.b64decode(raw).decode('utf-8')
+            except Exception:
+                pass
+        try:
+            body = json.loads(raw) if raw else {}
+        except Exception:
+            body = {}
+
+    action = body.get('action') or query.get('action')
+
+    # 1. Создание записи
+    if action == 'createBooking':
+        b_num = body.get('booking_number') or f"AD-{1000 + len(_MEMORY['bookings']) + 1}"
+        booking = {
+            'id': b_num,
+            'booking_number': b_num,
+            'date': body.get('date', datetime.now().strftime('%Y-%m-%d')),
+            'timeSlot': body.get('timeSlot', '12:00'),
+            'clientName': body.get('clientName', 'Клиент с сайта'),
+            'clientPhone': body.get('clientPhone', ''),
+            'carModel': body.get('carModel', 'Автомобиль'),
+            'serviceTitle': body.get('serviceTitle', 'Услуга'),
+            'totalPrice': int(body.get('totalPrice', 0)),
+            'boxName': body.get('boxName', 'Бокс 1'),
+            'status': body.get('status', 'pending'),
+            'createdAt': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        _MEMORY['bookings'].insert(0, booking)
+
+        msg = (
+            f"🚘 <b>Новая запись на мойку!</b>\\n\\n"
+            f"📅 <b>Дата:</b> {booking['date']} в <b>{booking['timeSlot']}</b>\\n"
+            f"👤 <b>Клиент:</b> {booking['clientName']} ({booking['clientPhone']})\\n"
+            f"🏎 <b>Авто:</b> {booking['carModel']}\\n"
+            f"✨ <b>Услуга:</b> {booking['serviceTitle']}\\n"
+            f"💰 <b>Сумма:</b> {booking['totalPrice']} ₽\\n"
+            f"📍 <b>Пост:</b> {booking['boxName']}"
+        )
+        send_tg_notification(msg)
+
+        return {
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({'status': 'success', 'message': 'Бронирование сохранено', 'booking': booking}, ensure_ascii=False)
+        }
+
+    # 2. Получение всех записей для админки
+    if action == 'getAllBookings':
+        return {
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({'status': 'success', 'bookings': _MEMORY['bookings']}, ensure_ascii=False)
+        }
+
+    # 3. Занятые слоты
+    if 'date' in query:
+        d = query.get('date')
+        slots = [b['timeSlot'] for b in _MEMORY['bookings'] if b.get('date') == d and b.get('status') != 'cancelled']
+        return {
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({'status': 'success', 'busySlots': slots}, ensure_ascii=False)
+        }
+
+    # 4. Обновление статуса
+    if action == 'updateStatus':
+        target = body.get('id') or body.get('booking_number') or query.get('id')
+        new_st = body.get('status') or query.get('status', 'pending')
+        for b in _MEMORY['bookings']:
+            if b.get('id') == target or b.get('booking_number') == target:
+                b['status'] = new_st
+                break
+        return {
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({'status': 'success', 'message': 'Статус обновлен'}, ensure_ascii=False)
+        }
+
+    # 5. Синхронизация настроек
+    if action == 'saveConfig':
+        if body.get('config'):
+            _MEMORY['config'] = body['config']
+        return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'status': 'success'}, ensure_ascii=False)}
+
+    if action == 'getConfig':
+        return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'status': 'success', 'config': _MEMORY.get('config')}, ensure_ascii=False)}
+
+    return {
+        'statusCode': 200,
+        'headers': CORS_HEADERS,
+        'body': json.dumps({'status': 'success', 'message': 'Yandex Cloud Function Webhook active'}, ensure_ascii=False)
+    }
+`;
+

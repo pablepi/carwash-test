@@ -23,7 +23,6 @@ import {
   Key,
   Database,
   ArrowsClockwise,
-  Code,
   CloudArrowUp,
   CloudArrowDown,
   SignOut,
@@ -51,6 +50,7 @@ import {
   fetchConfigFromGoogleSheets,
   updateRemoteBookingStatus,
   GOOGLE_APPS_SCRIPT_TEMPLATE,
+  YANDEX_CLOUD_FUNCTION_TEMPLATE,
   RemoteBookingRecord,
 } from '@/lib/google-sheets';
 import { slugify } from '@/lib/slugify';
@@ -438,6 +438,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const [isLoadingRemote, setIsLoadingRemote] = useState(false);
   const [isSyncingConfig, setIsSyncingConfig] = useState(false);
   const [isCopiedScript, setIsCopiedScript] = useState(false);
+  const [scriptTab, setScriptTab] = useState<'yandex' | 'google'>('yandex');
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   // Status overrides synced across devices via SiteConfig & local cache
@@ -2797,23 +2798,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
                     <div className="flex items-center gap-2 mb-1.5">
                       <Database size={18} className="text-accent-blue" weight="bold" />
                       <h3 className="text-base font-bold text-white">
-                        База данных (Google Таблицы)
+                        База данных (Яндекс Таблицы / Google Sheets)
                       </h3>
                     </div>
                     <p className="text-xs text-[#86868B]">
-                      Все бронирования с сайта автоматически сохраняются в вашей онлайн-таблице Google Sheets через Apps Script Web App.
+                      Все бронирования с сайта автоматически сохраняются в вашей онлайн-таблице через вебхук (Yandex Cloud Functions или Google Apps Script).
                     </p>
 
                     <div>
                       <label className="block text-[11px] uppercase font-mono text-[#A1A1A6] mb-1.5 font-semibold">
-                        URL веб-приложения Google Apps Script (exec)
+                        URL вебхука (Yandex Cloud Function или Google Apps Script)
                       </label>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <input
                           type="url"
                           value={googleSheetsUrlInput}
                           onChange={(e) => setGoogleSheetsUrlInput(e.target.value)}
-                          placeholder="https://script.google.com/macros/s/.../exec"
+                          placeholder="https://functions.yandexcloud.net/... или https://script.google.com/..."
                           className="flex-1 bg-[#161618] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-accent-blue"
                         />
                         <div className="flex items-center gap-2">
@@ -2875,21 +2876,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
                       </button>
                     </div>
 
-                    {/* Ready script template accordion/modal button */}
+                    {/* Ready script template card with tabs */}
                     <div className="p-4 rounded-2xl bg-[#161618] border border-white/10 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Code size={18} className="text-accent-blue" weight="bold" />
-                          <span className="text-xs font-bold text-white">
-                            Код Google Apps Script (для работы со всех устройств)
-                          </span>
+                      <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                        <div className="flex items-center gap-1.5 p-1 bg-black/40 rounded-xl border border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => setScriptTab('yandex')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                              scriptTab === 'yandex'
+                                ? 'bg-accent-blue text-white shadow-sm'
+                                : 'text-[#86868B] hover:text-white'
+                            }`}
+                          >
+                            Яндекс Облако (Python)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setScriptTab('google')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                              scriptTab === 'google'
+                                ? 'bg-accent-blue text-white shadow-sm'
+                                : 'text-[#86868B] hover:text-white'
+                            }`}
+                          >
+                            Google Apps Script (JS)
+                          </button>
                         </div>
                         <button
                           type="button"
                           onClick={() => {
-                            navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_TEMPLATE);
+                            const codeToCopy = scriptTab === 'yandex' ? YANDEX_CLOUD_FUNCTION_TEMPLATE : GOOGLE_APPS_SCRIPT_TEMPLATE;
+                            navigator.clipboard.writeText(codeToCopy);
                             setIsCopiedScript(true);
-                            showToast('Код скрипта скопирован в буфер!');
+                            showToast(scriptTab === 'yandex' ? 'Код для Яндекс Облака скопирован!' : 'Код Google Apps Script скопирован!');
                             setTimeout(() => setIsCopiedScript(false), 2500);
                           }}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-blue hover:brightness-110 text-xs font-bold text-white transition-all"
@@ -2898,16 +2918,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
                           <span>{isCopiedScript ? 'Скопировано!' : 'Скопировать готовый код'}</span>
                         </button>
                       </div>
-                      <p className="text-[11px] text-[#86868B] leading-relaxed">
-                        Чтобы база данных отображалась в админке с разных устройств (телефон, планшет, ПК), вставьте этот код в Apps Script вашей таблицы (Расширения → Apps Script) и нажмите «Новое развертывание» (Веб-приложение, доступ: Все).
-                      </p>
+
+                      {scriptTab === 'yandex' ? (
+                        <div className="space-y-1.5">
+                          <p className="text-[11px] text-[#86868B] leading-relaxed">
+                            <strong className="text-white">Для Яндекс Таблиц:</strong> Вставьте этот код в бесплатную функцию Яндекс Облака (Yandex Cloud → Cloud Functions → Создать функцию на Python 3.11, точка входа: <code className="text-accent-blue">index.handler</code>, включите переключатель <strong>«Публичная функция»</strong>). Бесплатно до 1 млн вызовов в месяц!
+                          </p>
+                          <p className="text-[10px] text-[#86868B]">
+                            Поддерживает сохранение бронирований, синхронизацию слотов и отправку уведомлений в Telegram.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-[#86868B] leading-relaxed">
+                          <strong className="text-white">Для Google Таблиц:</strong> Вставьте этот код в Apps Script вашей таблицы (Расширения → Apps Script) и нажмите «Новое развертывание» (Веб-приложение, доступ: Все).
+                        </p>
+                      )}
                     </div>
 
                     <div className="pt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#86868B] border-t border-white/[0.06]">
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34C759]" />
                         <span>
-                          Загружено из Google Таблицы: <strong className="text-white">{remoteBookings.length}</strong> записей
+                          Загружено из базы данных: <strong className="text-white">{remoteBookings.length}</strong> записей
                         </span>
                       </span>
                       <button
