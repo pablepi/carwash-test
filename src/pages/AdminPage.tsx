@@ -64,7 +64,7 @@ export const AdminPage: React.FC = () => {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
+              <label className="block text-xs font-medium text-[#F5F5F7] mb-1.5">
                 Логин
               </label>
               <div className="relative">
@@ -81,7 +81,7 @@ export const AdminPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
+              <label className="block text-xs font-medium text-[#F5F5F7] mb-1.5">
                 Пароль
               </label>
               <div className="relative">

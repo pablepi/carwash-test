@@ -14,7 +14,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ tenant: propTenant, on
 
   const title = config.branding.heroTitle || propTenant?.heroTitle || 'Бережная мойка без царапин и разводов';
   const subtitle = config.branding.heroSubtitle || propTenant?.heroSubtitle || 'Профессиональная химия, умягчённая вода и турбосушка.';
-  const name = config.branding.name || propTenant?.name || 'AquaDrive';
   const heroImage = config.branding.heroImageUrl || (propTenant as any)?.heroImage || 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1600&q=80';
   const address = config.contacts.address || propTenant?.address || 'г. Москва, ул. Автозаводская, д. 23';
   const hours = config.contacts.workingHours || `${propTenant?.openingHour || '08:00'} – ${propTenant?.closingHour || '22:00'}`;
@@ -47,11 +46,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ tenant: propTenant, on
 
           {/* Hero Content anchored safely inside the container with top clearance */}
           <div className="absolute inset-x-0 bottom-0 z-20 p-5 sm:p-8 pt-16 flex flex-col items-start justify-end">
-            <span className="text-[11px] font-sans uppercase tracking-widest text-accent-blue font-semibold mb-1.5">
-              {name}
-            </span>
-
-            <h1 className="hero-title text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-[1.15] max-w-2xl mb-2 sm:mb-3">
+            <h1 className="hero-title text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-[1.15] max-w-2xl mb-2 sm:mb-3">
               {title}
             </h1>
 
@@ -67,7 +62,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ tenant: propTenant, on
               >
                 <LiquidGlass
                   rounded="rounded-2xl"
-                  className="hero-glass w-full transition-all duration-200 group-hover:border-accent-blue/50 shadow-[0_0_24px_-4px_var(--apple-accent-blue)]"
+                  className="hero-glass w-full transition-all duration-200 group-hover:border-accent-blue/50 shadow-md"
                 >
                   <div className="flex items-center justify-center gap-2.5 px-6 py-3.5 text-sm sm:text-base select-none">
                     <CalendarPlus size={20} weight="bold" className="text-accent-blue shrink-0" />

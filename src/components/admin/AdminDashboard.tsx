@@ -1577,30 +1577,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             {/* 4 Summary Metrics for the past week */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="astryx-card p-4 bg-[#161618] border border-white/10 rounded-2xl">
-                <span className="block text-[11px] uppercase tracking-wider text-[#A1A1A6] font-mono">
+                <span className="block text-xs text-[#A1A1A6] font-medium">
                   Выручка за 7 дней
                 </span>
-                <span className="block font-mono text-xl sm:text-2xl font-extrabold text-emerald-400 mt-1 tabular-nums">
+                <span className="block font-mono text-xl sm:text-2xl font-bold text-emerald-400 mt-1 tabular-nums">
                   {historyMetrics.totalRev.toLocaleString('ru-RU')} ₽
                 </span>
                 <span className="text-[11px] text-[#86868B]">по выполненным визитам</span>
               </div>
 
               <div className="astryx-card p-4 bg-[#161618] border border-white/10 rounded-2xl">
-                <span className="block text-[11px] uppercase tracking-wider text-[#A1A1A6] font-mono">
+                <span className="block text-xs text-[#A1A1A6] font-medium">
                   Всего визитов
                 </span>
-                <span className="block font-mono text-xl sm:text-2xl font-extrabold text-white mt-1 tabular-nums">
+                <span className="block font-mono text-xl sm:text-2xl font-bold text-white mt-1 tabular-nums">
                   {historyMetrics.totalCount} авто
                 </span>
                 <span className="text-[11px] text-[#86868B]">за прошедшую неделю</span>
               </div>
 
               <div className="astryx-card p-4 bg-[#161618] border border-white/10 rounded-2xl">
-                <span className="block text-[11px] uppercase tracking-wider text-[#A1A1A6] font-mono">
+                <span className="block text-xs text-[#A1A1A6] font-medium">
                   Выполнено успешно
                 </span>
-                <span className="block font-mono text-xl sm:text-2xl font-extrabold text-accent-blue mt-1 tabular-nums">
+                <span className="block font-mono text-xl sm:text-2xl font-bold text-accent-blue mt-1 tabular-nums">
                   {historyMetrics.completedCount}
                 </span>
                 <span className="text-[11px] text-[#86868B]">
@@ -1609,10 +1609,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
               </div>
 
               <div className="astryx-card p-4 bg-[#161618] border border-white/10 rounded-2xl">
-                <span className="block text-[11px] uppercase tracking-wider text-[#A1A1A6] font-mono">
+                <span className="block text-xs text-[#A1A1A6] font-medium">
                   Средний чек
                 </span>
-                <span className="block font-mono text-xl sm:text-2xl font-extrabold text-white mt-1 tabular-nums">
+                <span className="block font-mono text-xl sm:text-2xl font-bold text-white mt-1 tabular-nums">
                   {historyMetrics.avgCheck.toLocaleString('ru-RU')} ₽
                 </span>
                 <span className="text-[11px] text-[#86868B]">отменено: {historyMetrics.cancelledCount}</span>

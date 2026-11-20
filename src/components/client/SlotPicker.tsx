@@ -128,10 +128,7 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
     <div className={isCompact ? '' : 'mx-auto max-w-5xl px-3 sm:px-6 mb-16 scroll-mt-6'}>
       {!isCompact && (
         <div className="mb-5">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-accent-blue font-semibold">
-            РАСПИСАНИЕ
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-[#F5F5F7] tracking-tight mt-0.5">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#F5F5F7] tracking-tight">
             Запись на мойку
           </h2>
           <p className="text-xs text-[#A1A1A6] mt-1">
@@ -152,7 +149,7 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
         {/* Calendar strip */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] text-[#1C1C1E] dark:text-[#F5F5F7] uppercase tracking-wider font-semibold">
+            <span className="text-xs text-[#1C1C1E] dark:text-[#F5F5F7] font-semibold">
               Дата заезда
             </span>
             <span className="text-xs text-[#1C1C1E] dark:text-white capitalize font-semibold tracking-wide">
@@ -175,11 +172,11 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
                   onClick={() => setSelectedDate(d)}
                   className={`flex flex-col items-center justify-center min-w-[52px] py-2 px-1.5 rounded-xl transition-all duration-150 active:scale-95 border shrink-0 ${
                     isSelected
-                      ? 'bg-accent-blue text-white border-accent-blue shadow-[0_0_16px_-3px_var(--apple-accent-blue)] font-bold'
+                      ? 'bg-accent-blue text-white border-accent-blue shadow-sm font-bold'
                       : 'bg-white dark:bg-[#1C1C1E] text-[#1C1C1E] dark:text-white border-black/10 dark:border-white/15 hover:border-black/20 dark:hover:border-white/30 hover:bg-black/[0.02] dark:hover:bg-[#252528]'
                   }`}
                 >
-                  <span className={`text-[11px] uppercase tracking-wider font-semibold ${isSelected ? 'text-white' : 'text-[#636366] dark:text-white/70'}`}>
+                  <span className={`text-[11px] font-medium ${isSelected ? 'text-white' : 'text-[#636366] dark:text-white/70'}`}>
                     {dayName}
                   </span>
                   <span className={`text-base font-bold tabular-nums mt-0.5 ${isSelected ? 'text-white' : 'text-[#1C1C1E] dark:text-white'}`}>
@@ -194,7 +191,7 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
         {/* Slot grid */}
         <div>
           <div className="flex items-center justify-between mb-2.5 flex-wrap gap-2">
-            <span className="text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] uppercase tracking-wider font-semibold">
+            <span className="text-xs text-[#1C1C1E] dark:text-[#F5F5F7] font-semibold">
               Свободные слоты
             </span>
             <div className="flex items-center gap-2.5 text-[10px] font-mono text-[#636366] dark:text-[#A1A1A6]">
@@ -225,7 +222,7 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
                     onClick={() => onSlotSelected(slot.dateTimeIso, slot.timeStr, targetDateStr, slot.boxName)}
                     className={`flex flex-col items-center justify-center py-2 px-1.5 rounded-xl border text-sm font-mono font-semibold transition-all duration-150 tabular-nums ${
                       isSelected
-                        ? 'bg-accent-blue text-white border-accent-blue shadow-[0_0_16px_-3px_var(--apple-accent-blue)] font-bold ring-2 ring-accent-blue/30'
+                        ? 'bg-accent-blue text-white border-accent-blue font-bold ring-2 ring-accent-blue/30 shadow-sm'
                         : isDisabled
                         ? 'bg-black/[0.04] dark:bg-black/50 text-[#8E8E93] dark:text-[#48484A] border-black/5 dark:border-white/[0.04] cursor-not-allowed line-through opacity-50'
                         : 'bg-white dark:bg-[#1C1C1E] text-[#1C1C1E] dark:text-white border-black/10 dark:border-white/15 hover:border-accent-blue/50 hover:bg-black/[0.02] dark:hover:bg-[#2C2C2E] active:scale-95'

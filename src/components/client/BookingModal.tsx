@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { X, Lock, Car, Phone, User, Warning, Sparkle, Check } from '@phosphor-icons/react';
+import { X, Lock, Car, Phone, User, Warning, CaretDown, Check } from '@phosphor-icons/react';
 import { ServiceItem } from './ServiceCatalog';
 import { SlotPicker } from './SlotPicker';
 import { GlassButton } from '../common/GlassButton';
@@ -246,7 +246,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Car Category Switcher inside Modal */}
           <div>
-            <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
+            <label className="block text-xs font-medium text-[#1C1C1E] dark:text-[#F5F5F7] mb-1.5">
               Категория авто
             </label>
             <div className="grid grid-cols-3 gap-1.5 p-1 bg-black/[0.05] dark:bg-[#1C1C1E] border border-black/5 dark:border-white/[0.08] rounded-xl">
@@ -273,22 +273,22 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
           {/* Service Selector */}
           <div>
-            <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1.5 uppercase tracking-wider font-semibold">
+            <label className="block text-xs font-medium text-[#1C1C1E] dark:text-[#F5F5F7] mb-1.5">
               Услуга
             </label>
             <div className="relative">
               <select
                 value={selectedServiceId}
                 onChange={(e) => setSelectedServiceId(e.target.value)}
-                className="w-full bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-[#1C1C1E] dark:text-[#F5F5F7] focus:outline-none focus:border-accent-blue appearance-none"
+                className="w-full bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-[#1C1C1E] dark:text-[#F5F5F7] focus:outline-none focus:border-accent-blue appearance-none pr-8"
               >
                 {config.services.map((s) => (
                   <option key={s.id} value={s.id} className="bg-white dark:bg-[#1C1C1E] text-[#1C1C1E] dark:text-[#F5F5F7]">
-                    {s.name} — {s.prices[selectedCarCategory]} ₽ ({s.durationMinutes} мин)
+                    {s.name}, {s.prices[selectedCarCategory]} ₽ ({s.durationMinutes} мин)
                   </option>
                 ))}
               </select>
-              <Sparkle size={16} className="absolute right-3.5 top-3 text-accent-blue pointer-events-none" />
+              <CaretDown size={14} className="absolute right-3.5 top-3.5 text-[#86868B] pointer-events-none" />
             </div>
           </div>
 
@@ -321,8 +321,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* Customer & Car Info */}
           <div className="space-y-3 pt-1">
             <div>
-              <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
-                Ваше имя
+              <label className="block text-xs font-medium text-[#1C1C1E] dark:text-[#F5F5F7] mb-1">
+                Имя
               </label>
               <div className="relative">
                 <User size={16} className="absolute left-3.5 top-3 text-[#86868B]" />
@@ -338,8 +338,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
-                Номер телефона
+              <label className="block text-xs font-medium text-[#1C1C1E] dark:text-[#F5F5F7] mb-1">
+                Телефон
               </label>
               <div className="relative">
                 <Phone size={16} className="absolute left-3.5 top-3 text-[#86868B]" />
@@ -356,8 +356,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
-                  Марка и модель авто
+                <label className="block text-xs font-medium text-[#1C1C1E] dark:text-[#F5F5F7] mb-1">
+                  Марка и модель
                 </label>
                 <div className="relative">
                   <Car size={16} className="absolute left-3.5 top-3 text-[#86868B]" />
@@ -373,7 +373,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-[#1C1C1E] dark:text-[#F5F5F7] mb-1 uppercase tracking-wider font-semibold">
+                <label className="block text-xs font-medium text-[#1C1C1E] dark:text-[#F5F5F7] mb-1">
                   Госномер (необязательно)
                 </label>
                 <input

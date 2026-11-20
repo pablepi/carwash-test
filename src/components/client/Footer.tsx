@@ -34,10 +34,7 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
           
           {/* Column 1: Studio Info & Schedule */}
           <div className="flex flex-col items-start gap-3">
-            <span className="text-[11px] font-sans uppercase tracking-widest text-accent-blue font-semibold">
-              АВТОМОЙКА И ДЕТЕЙЛИНГ
-            </span>
-            <h3 className="text-xl font-extrabold text-[#1C1C1E] dark:text-white tracking-tight">
+            <h3 className="text-xl font-bold text-[#1C1C1E] dark:text-white tracking-tight">
               {name}
             </h3>
             <p className="text-xs text-[#636366] dark:text-[#A1A1A6] leading-relaxed max-w-sm">
@@ -54,9 +51,9 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
 
           {/* Column 2: Address & Location */}
           <div className="flex flex-col items-start gap-3">
-            <span className="text-[11px] font-sans uppercase tracking-widest text-accent-blue font-semibold">
-              АДРЕС И ПРОЕЗД
-            </span>
+            <h4 className="text-sm font-semibold text-[#1C1C1E] dark:text-white">
+              Адрес
+            </h4>
 
             <div className="flex items-start gap-2.5 text-sm text-[#1C1C1E] dark:text-white/95 leading-relaxed">
               <MapPin size={18} className="text-accent-blue shrink-0 mt-0.5" weight="fill" />
@@ -76,9 +73,9 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
 
           {/* Column 3: Contacts & Socials */}
           <div className="flex flex-col items-start gap-3">
-            <span className="text-[11px] font-sans uppercase tracking-widest text-accent-blue font-semibold">
-              СВЯЗАТЬСЯ С НАМИ
-            </span>
+            <h4 className="text-sm font-semibold text-[#1C1C1E] dark:text-white">
+              Контакты
+            </h4>
 
             <a
               href={`tel:${cleanPhone}`}
@@ -87,10 +84,6 @@ export const Footer: React.FC<FooterProps> = ({ tenant: propTenant, className = 
               <Phone size={18} weight="fill" className="text-accent-blue" />
               <span>{phone}</span>
             </a>
-
-            <p className="text-xs text-[#636366] dark:text-[#A1A1A6]">
-              Ответим на вопросы, проконсультируем по услугам и запишем авто:
-            </p>
 
             {/* Social Media & Messenger Buttons */}
             <div className="grid grid-cols-2 gap-2 pt-1 w-full max-w-[260px]">

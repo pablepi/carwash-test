@@ -10,7 +10,6 @@ import { Footer } from '@/components/client/Footer';
 import {
   XCircle,
   ArrowLeft,
-  ShieldCheck,
   Car,
   Ticket,
   Phone,
@@ -431,21 +430,18 @@ export const MyBooking: React.FC = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(`/s/${currentSlug}`)}
-          className="hidden sm:inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#636366] dark:text-[#A1A1A6] hover:text-[#1C1C1E] dark:hover:text-white transition-colors mb-6"
+          className="hidden sm:inline-flex items-center gap-2 text-xs font-medium text-[#636366] dark:text-[#A1A1A6] hover:text-[#1C1C1E] dark:hover:text-white transition-colors mb-6"
         >
           <ArrowLeft size={16} /> На главную студии
         </button>
 
         {/* Page Title & Intro */}
         <div className="mb-5 sm:mb-7">
-          <Badge variant="blue" icon={<ShieldCheck size={14} weight="fill" />}>
-            ПРОВЕРКА БРОНИРОВАНИЯ
-          </Badge>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-[#1C1C1E] dark:text-white tracking-tight mt-2.5 mb-2">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-[#1C1C1E] dark:text-white tracking-tight mb-2">
             Моя запись
           </h1>
           <p className="text-xs sm:text-sm text-[#636366] dark:text-[#A1A1A6] max-w-2xl leading-relaxed">
-            Просмотр деталей вашего визита, времени готовности бокса и моментальное управление бронью без регистрации.
+            Просмотр деталей вашего визита, времени готовности бокса и управление бронью без регистрации.
           </p>
         </div>
 
@@ -563,10 +559,10 @@ export const MyBooking: React.FC = () => {
 
             <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-black/10 dark:border-white/10">
               <div>
-                <span className="text-[11px] uppercase tracking-wider text-accent-blue font-semibold block mb-1">
-                  Номер бронирования: #{bookingData.booking_number}
+                <span className="text-xs text-text-secondary font-medium block mb-1">
+                  Запись #{bookingData.booking_number}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-[#1C1C1E] dark:text-white">
+                <h3 className="text-xl sm:text-2xl font-bold text-[#1C1C1E] dark:text-white">
                   {bookingData.service_title}
                 </h3>
               </div>
@@ -609,8 +605,8 @@ export const MyBooking: React.FC = () => {
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                     )}
                   </span>
-                  <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/70 font-bold">
-                    Текущий статус машины в боксе
+                  <span className="text-xs text-text-secondary font-medium">
+                    Статус автомобиля
                   </span>
                 </div>
 
@@ -729,7 +725,7 @@ export const MyBooking: React.FC = () => {
             {/* Detailed Grid Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
               <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1">
-                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
+                <span className="text-xs text-text-secondary font-medium block">
                   Автомобиль
                 </span>
                 <span className="text-sm sm:text-base font-bold text-[#1C1C1E] dark:text-white">
@@ -738,7 +734,7 @@ export const MyBooking: React.FC = () => {
               </div>
 
               <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1">
-                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
+                <span className="text-xs text-text-secondary font-medium block">
                   Дата и время заезда
                 </span>
                 <span className="text-sm sm:text-base font-bold text-accent-blue">
@@ -747,7 +743,7 @@ export const MyBooking: React.FC = () => {
               </div>
 
               <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1">
-                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
+                <span className="text-xs text-text-secondary font-medium block">
                   Назначенный бокс
                 </span>
                 <span className="text-sm sm:text-base font-bold text-[#1C1C1E] dark:text-white">
@@ -756,16 +752,16 @@ export const MyBooking: React.FC = () => {
               </div>
 
               <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1">
-                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
+                <span className="text-xs text-text-secondary font-medium block">
                   К оплате при заезде
                 </span>
-                <span className="text-xl sm:text-2xl font-extrabold text-[#1C1C1E] dark:text-white tracking-wide">
+                <span className="text-xl sm:text-2xl font-bold text-[#1C1C1E] dark:text-white tracking-wide">
                   {Number(bookingData.total_price || 0).toLocaleString('ru-RU')} ₽
                 </span>
               </div>
 
               <div className="p-4 rounded-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 space-y-1 sm:col-span-2">
-                <span className="text-xs uppercase tracking-wider text-[#636366] dark:text-white/60 font-semibold block">
+                <span className="text-xs text-text-secondary font-medium block">
                   Адрес боксов
                 </span>
                 <span className="text-xs sm:text-sm font-medium text-[#1C1C1E] dark:text-white block">

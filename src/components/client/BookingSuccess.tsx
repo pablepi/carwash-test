@@ -6,7 +6,6 @@ import { CheckCircle, Calendar, Bell, ShareNetwork, Clock, ArrowLeft, Ticket } f
 import { generateIcsFile, downloadIcsFile } from '@/lib/ics';
 import { TenantConfig } from '@/types/tenant';
 import { GlassButton } from '../common/GlassButton';
-import { Badge } from '../common/Badge';
 
 interface BookingSuccessProps {
   booking: any;
@@ -101,22 +100,20 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
           <CheckCircle size={36} weight="fill" />
         </div>
 
-        <Badge variant="success">ЗАПИСЬ УСПЕШНО ОФОРМЛЕНА</Badge>
-
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mt-3 mb-1">
+        <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight mt-1 mb-1">
           Ждём вас на мойку
         </h2>
         <p className="text-xs text-text-secondary max-w-md mx-auto mb-4">
-          Бронь зафиксирована. Регистрация не требуется — используйте номер записи для проверки статуса.
+          Бронь зафиксирована. Регистрация не требуется, используйте номер записи для проверки статуса.
         </p>
 
         {/* Индивидуальный номер записи */}
         <div className="mx-auto max-w-sm mb-6 p-4 rounded-2xl bg-white/[0.08] border border-white/15 flex items-center justify-between">
           <div className="text-left">
-            <span className="block text-[10px] uppercase tracking-wider text-[#A1A1A6] font-semibold">
-              Ваш номер записи
+            <span className="block text-xs text-text-secondary font-medium">
+              Номер записи
             </span>
-            <span className="text-xl sm:text-2xl font-extrabold text-white tracking-wider font-mono">
+            <span className="text-xl sm:text-2xl font-bold text-white tracking-wider font-mono">
               {bookingNumber}
             </span>
           </div>
@@ -157,8 +154,8 @@ export const BookingSuccess: React.FC<BookingSuccessProps> = ({ booking, tenant,
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <span className="text-xs uppercase tracking-wider font-semibold text-[#F5F5F7]">
-              Сумма к оплате:
+            <span className="text-xs font-medium text-text-secondary">
+              Сумма к оплате
             </span>
             <span className="text-xl font-bold text-white tracking-wide tabular-nums">
               {totalPrice.toLocaleString('ru-RU')} ₽

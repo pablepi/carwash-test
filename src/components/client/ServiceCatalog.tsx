@@ -72,14 +72,11 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-accent-blue font-semibold">
-              ПРАЙС-ЛИСТ И ТАРИФЫ
-            </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#FFFFFF] tracking-tight mt-0.5">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#FFFFFF] tracking-tight">
               Услуги автомойки
             </h2>
             <p className="text-xs text-[#86868B] mt-1">
-              Выберите тип вашего автомобиля для автоматического расчета точной стоимости
+              Стоимость рассчитывается по категории кузова
             </p>
           </div>
 
@@ -135,7 +132,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
               onClick={() => handleServiceClick(service)}
               className={`astryx-card p-4 sm:p-5 cursor-pointer transition-all duration-200 bg-white dark:bg-[#161618] border border-black/10 dark:border-white/10 ${
                 isSelected
-                  ? 'border-accent-blue bg-white dark:bg-[#1C1C1E] shadow-[0_0_20px_-4px_var(--apple-accent-blue)] ring-1 ring-accent-blue'
+                  ? 'border-accent-blue bg-white dark:bg-[#1C1C1E] ring-1 ring-accent-blue shadow-sm'
                   : 'hover:border-black/20 dark:hover:border-white/20'
               }`}
             >
@@ -176,7 +173,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
 
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
-                    <span className="block text-[10px] font-mono text-[#8E8E93] dark:text-[#86868B] uppercase tracking-wider font-semibold">
+                    <span className="block text-[11px] text-[#8E8E93] dark:text-[#86868B]">
                       Стоимость
                     </span>
                     <span className="font-mono text-base sm:text-lg font-bold text-[#1C1C1E] dark:text-[#FFFFFF] tabular-nums transition-all">
