@@ -44,7 +44,7 @@ function githubPagesSpaPlugin(): Plugin {
 }
 
 export default defineConfig({
-  base: '/carwash-test/',
+  base: '/',
   plugins: [
     react(),
     glslPlugin(),
@@ -61,8 +61,8 @@ export default defineConfig({
         background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait-primary',
-        start_url: '/carwash-test/',
-        scope: '/carwash-test/',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
             src: '/pwa-192.png',
